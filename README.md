@@ -1,4 +1,4 @@
-# Real-time Named-Data Service
+# Real-Time Named-Data Service
 
 Lite data service with name-based access, in-network caching and time-aware priority queues. Inspired by Named-Data Networking (NDN) and IEEE 802.1Qbv Time-aware Shaper (TAS). Go-based server with Python client.
 
