@@ -1,0 +1,138 @@
+syntax = "proto3";
+
+package ndn-rt;
+
+option go_package = "/packet";
+
+// Enum for packet types
+enum PacketType {
+  UNKNOWN_PACKET_TYPE = 0;
+  // High Priority: Time-aware queue, ACK required
+  JOIN_REQUEST = 1;
+  JOIN_RESPONSE = 2;
+  ERROR_MESSAGE = 3;
+  DATA_REGISTER = 4;
+  DATA_INTEREST = 5;
+  DATA_CONTENT = 6;
+  ACKNOWLEDGEMENT = 7;
+  CONFIGURATION = 9;
+
+  // Medium Priority: ACK required  
+  STATISTICS = 8;
+
+  // Low Priority: Best-effort delivery
+  HEARTBEAT = 10;
+}
+
+// Enum for priority levels
+enum Priority {
+  UNKNOWN_PRIORITY = 0;
+  LOW = 1;
+  MEDIUM = 2;
+  HIGH = 3;
+}
+
+// Enum for device type
+enum DeviceType {
+  UNKNOWN_DEVICE_TYPE = 0;
+  MS =  1;
+  UE = 2;
+}
+
+// Enum for error codes
+enum ErrorCode {
+  UNKNOWN_ERROR = 0;
+  AUTHENTICATION_FAILED = 1;
+  DATA_REGISTER_FAILED = 2;
+  DATA_NOT_FOUND = 3;
+  DATA_NOT_READY = 4;
+  DATA_CHECK_SUM_FAILED = 5;
+}
+
+// Common header for all packets
+message PacketHeader {
+  uint32 protocol_version = 1;
+  uint32 packet_uid = 2;
+  PacketType packet_type = 3;
+  uint32 sequence_number = 4;
+  uint32 source_id = 5;
+  uint32 destination_id = 6;
+  Priority priority = 7;
+  uint64 timestamp = 8;
+  uint32 payload_length = 9;
+}
+
+// Join Request
+message JoinRequest {
+  uint32 id = 1;
+  DeviceType type = 2;
+  uint32 authentication_token = 3;
+}
+
+// Join Response
+message JoinResponse {
+  uint32 session_token = 2;
+}
+
+// Data Register
+message DataRegister {
+  string name = 1;
+  uint64 freshness = 2; // in seconds
+  uint64 size = 3;
+}
+
+// Data Interest
+message DataInterest {
+  string name = 1;
+}
+
+// Data Content
+message DataContent {
+  string name = 1;
+  uint32 checksum = 2; // CRC32
+  bytes data = 3;
+}
+
+// Acknowledgement
+message Acknowledgement {
+  int64 latency = 1;
+}
+
+// Error Message
+message ErrorMessage {
+  ErrorCode error_code = 1;
+}
+
+// Statistics
+message Statistics {
+  uint32 station_id = 1;
+  uint32 status_code = 2;
+}
+
+// Configuration
+message Configuration {
+  uint32 station_id = 1;
+  bytes config_data = 2;
+}
+
+// Heartbeat
+message Heartbeat {
+  uint64 timestamp = 2;
+}
+
+// Main packet message that encapsulates all types
+message PNTaaSPacket {
+  PacketHeader header = 1;
+  oneof payload {
+    JoinRequest join_request = 2;
+    JoinResponse join_response = 3;
+    DataRegister data_register = 4;
+    DataInterest data_interest = 5;
+    DataContent data_content = 6;
+    Acknowledgement acknowledgement = 7;
+    ErrorMessage error_message = 8;
+    Statistics statistics = 9;
+    Configuration configuration = 10;
+    Heartbeat heartbeat = 11;
+  }
+}
