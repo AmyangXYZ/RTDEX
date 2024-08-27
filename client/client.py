@@ -10,7 +10,7 @@ import select
 from typing import Optional, Tuple
 
 
-class PNTaaSClient:
+class Client:
     def __init__(self, id: int, device_type: str = 'UE', server_addr: Tuple[str, int] = ('localhost', 9999), verbose=False):
         self.id = id
         self.device_type = device_type
@@ -79,6 +79,11 @@ class PNTaaSClient:
             error_code = ErrorCode.Name(response.error_message.error_code)
             if self.verbose:
                 print(f"[Client-{self.id}] Error retrieving data: {error_code}")
+            return None
+
+        if zlib.crc32(response.data_content.data) != response.data_content.checksum:
+            if self.verbose:
+                print(f"[Client-{self.id}] Data integrity check failed")
             return None
 
         return response.data_content.data
@@ -244,35 +249,3 @@ class PNTaaSClient:
 
         if not self._send_packet(upload_packet):
             raise Exception("Failed to upload data after maximum retries")
-
-
-def main():
-    client = PNTaaSClient(3)
-
-    try:
-        if not client.connect(123):
-            print(f"[Client-{client.id}] Failed to connect. Exiting.")
-            return
-
-        # Upload data
-        with open('random_file.bin', 'rb') as f:
-            data = f.read()
-        name = '/data/test/random_file.bin'
-        client.put(name, data, freshness=300)
-        time.sleep(1)
-
-        # Request data
-        retrieved_data = client.get(name, timeout=5.0)
-        if retrieved_data is not None:
-            print(f"Retrieved data size: {len(retrieved_data)}")
-        else:
-            print("Failed to retrieve data")
-
-    except KeyboardInterrupt:
-        print(f"[Client-{client.id}] Client shutting down")
-    finally:
-        client.disconnect()
-
-
-if __name__ == '__main__':
-    main()

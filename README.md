@@ -93,3 +93,7 @@ data = client.get('/data/images/2023/06/01/sunset.jpg')
 
 ![packets](./screenshot-packets.png)
 ![cache](./screenshot-data.png)
+
+## Note
+
+Use `pip install protobuf==3.20.*`
