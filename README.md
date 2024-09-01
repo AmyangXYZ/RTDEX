@@ -1,6 +1,6 @@
-# Real-Time Named-Data Service
+# Real-Time Data Exchange (RTDEX)
 
-Lite data service with name-based access, in-network caching and time-aware priority queues. Inspired by Named-Data Networking (NDN) and IEEE 802.1Qbv Time-aware Shaper (TAS). Go-based server with Python client.
+A real-time data exchange protocol and library inspired by Named-Data Networking (NDN) and IEEE 802.1Qbv Time-aware Shaper (TAS).
 
 ## Features
 

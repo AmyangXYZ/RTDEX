@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package ndn-rt;
 
-option go_package = "/packet";
+option go_package = "github.com/AmyangXYZ/rtdex/pkg/packet";
 
 // Enum for packet types
 enum PacketType {
