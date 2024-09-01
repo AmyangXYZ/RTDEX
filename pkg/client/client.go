@@ -69,7 +69,7 @@ func (c *Client) Put(name string, data []byte, freshness uint64) error {
 	return c.registerAndUploadData(name, data, freshness)
 }
 
-func (c *Client) Get(name string, timeout time.Duration) ([]byte, error) {
+func (c *Client) Get(name string) ([]byte, error) {
 	if !c.connected {
 		return nil, errors.New("not connected to RTDEX server")
 	}
@@ -81,7 +81,7 @@ func (c *Client) Get(name string, timeout time.Duration) ([]byte, error) {
 		return nil, errors.New("failed to send DATA_INTEREST")
 	}
 
-	response, err := c.waitForPacket([]packet.PacketType{packet.PacketType_DATA_CONTENT, packet.PacketType_ERROR_MESSAGE}, timeout)
+	response, err := c.waitForPacket([]packet.PacketType{packet.PacketType_DATA_CONTENT, packet.PacketType_ERROR_MESSAGE}, c.cfg.ClientResponseTimeout)
 	if err != nil {
 		return nil, err
 	}

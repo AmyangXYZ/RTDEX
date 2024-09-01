@@ -73,23 +73,32 @@ graph BT
 ## Usage
 
 ```go
-engine := engine.NewEngine(config.DefaultConfig)
-engine.Start()
+package main
 
-client := client.NewClient(3, "device-type-1", config.DefaultConfig)
-client.Connect()
-client.Put("/data/test", []byte("test"), 60)
+import (
+	"fmt"
 
-data, err := client.Get("/data/test", time.Second*10)
+	"github.com/AmyangXYZ/rtdex"
+)
 
-if err != nil {
-    fmt.Println(err)
+func main() {
+	engine := rtdex.NewEngine(rtdex.DefaultConfig)
+	go engine.Start()
+
+	client := rtdex.NewClient(3, "t", rtdex.DefaultConfig)
+	client.Connect()
+	client.Put("/data/test", []byte("test"), 10)
+
+	if data, err := client.Get("/data/test"); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("data:", string(data))
+	}
+
+	client.Disconnect()
+	go engine.Stop()
+	select {}
 }
-fmt.Println("data:", string(data))
-
-client.Disconnect()
-
-engine.Stop()
 ```
 
 ![packets](./screenshot-packets.png)

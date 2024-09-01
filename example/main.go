@@ -2,27 +2,23 @@ package main
 
 import (
 	"fmt"
-	"time"
 
-	"github.com/AmyangXYZ/rtdex/pkg/client"
-	"github.com/AmyangXYZ/rtdex/pkg/config"
-	"github.com/AmyangXYZ/rtdex/pkg/engine"
+	"github.com/AmyangXYZ/rtdex"
 )
 
 func main() {
-	engine := engine.NewEngine(config.DefaultConfig)
+	engine := rtdex.NewEngine(rtdex.DefaultConfig)
 	go engine.Start()
-	time.Sleep(time.Millisecond * 500)
 
-	client := client.NewClient(3, "t", config.DefaultConfig)
+	client := rtdex.NewClient(3, "type-A-device", rtdex.DefaultConfig)
 	client.Connect()
-	client.Put("/data/test", []byte("test"), 1)
+	client.Put("/data/test", []byte("test"), 10)
 
-	data, err := client.Get("/data/test", time.Second*10)
-	if err != nil {
+	if data, err := client.Get("/data/test"); err != nil {
 		fmt.Println(err)
+	} else {
+		fmt.Println("data:", string(data))
 	}
-	fmt.Println("data:", string(data))
 
 	client.Disconnect()
 	go engine.Stop()
