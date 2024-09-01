@@ -28,7 +28,7 @@ func getSeqNo() uint32 {
 	return uint32(sequenceNumber)
 }
 
-func getPayloadLength(pkt *PNTaaSPacket) uint32 {
+func getPayloadLength(pkt *RTDEXPacket) uint32 {
 	if pkt == nil {
 		return 0
 	}
@@ -48,10 +48,10 @@ func createHeader(packetType PacketType, uid, seqNo, src, dst uint32, priority P
 	}
 }
 
-func CreateJoinRequestPacket(src, dst uint32, id uint32, type_ DeviceType, token uint32) *PNTaaSPacket {
-	pkt := &PNTaaSPacket{
+func CreateJoinRequestPacket(src, dst uint32, id uint32, type_ ClientType, token uint32) *RTDEXPacket {
+	pkt := &RTDEXPacket{
 		Header: createHeader(PacketType_JOIN_REQUEST, getUID(), getSeqNo(), src, dst, Priority_HIGH),
-		Payload: &PNTaaSPacket_JoinRequest{
+		Payload: &RTDEXPacket_JoinRequest{
 			JoinRequest: &JoinRequest{
 				Id:                  id,
 				Type:                type_,
@@ -63,10 +63,10 @@ func CreateJoinRequestPacket(src, dst uint32, id uint32, type_ DeviceType, token
 	return pkt
 }
 
-func CreateJoinResponsePacket(src, dst uint32, sessionToken uint32) *PNTaaSPacket {
-	pkt := &PNTaaSPacket{
+func CreateJoinResponsePacket(src, dst uint32, sessionToken uint32) *RTDEXPacket {
+	pkt := &RTDEXPacket{
 		Header: createHeader(PacketType_JOIN_RESPONSE, getUID(), getSeqNo(), src, dst, Priority_HIGH),
-		Payload: &PNTaaSPacket_JoinResponse{
+		Payload: &RTDEXPacket_JoinResponse{
 			JoinResponse: &JoinResponse{
 				SessionToken: sessionToken,
 			},
@@ -76,10 +76,10 @@ func CreateJoinResponsePacket(src, dst uint32, sessionToken uint32) *PNTaaSPacke
 	return pkt
 }
 
-func CreateDataRegisterPacket(src, dst uint32, name string, freshness, size uint64) *PNTaaSPacket {
-	pkt := &PNTaaSPacket{
+func CreateDataRegisterPacket(src, dst uint32, name string, freshness, size uint64) *RTDEXPacket {
+	pkt := &RTDEXPacket{
 		Header: createHeader(PacketType_DATA_REGISTER, getUID(), getSeqNo(), src, dst, Priority_HIGH),
-		Payload: &PNTaaSPacket_DataRegister{
+		Payload: &RTDEXPacket_DataRegister{
 			DataRegister: &DataRegister{
 				Name:      name,
 				Freshness: freshness,
@@ -91,10 +91,10 @@ func CreateDataRegisterPacket(src, dst uint32, name string, freshness, size uint
 	return pkt
 }
 
-func CreateDataInterestPacket(src, dst uint32, name string) *PNTaaSPacket {
-	pkt := &PNTaaSPacket{
+func CreateDataInterestPacket(src, dst uint32, name string) *RTDEXPacket {
+	pkt := &RTDEXPacket{
 		Header: createHeader(PacketType_DATA_INTEREST, getUID(), getSeqNo(), src, dst, Priority_HIGH),
-		Payload: &PNTaaSPacket_DataInterest{
+		Payload: &RTDEXPacket_DataInterest{
 			DataInterest: &DataInterest{
 				Name: name,
 			},
@@ -104,10 +104,10 @@ func CreateDataInterestPacket(src, dst uint32, name string) *PNTaaSPacket {
 	return pkt
 }
 
-func CreateDataContentPacket(src, dst uint32, name string, checksum uint32, data []byte) *PNTaaSPacket {
-	pkt := &PNTaaSPacket{
+func CreateDataContentPacket(src, dst uint32, name string, checksum uint32, data []byte) *RTDEXPacket {
+	pkt := &RTDEXPacket{
 		Header: createHeader(PacketType_DATA_CONTENT, getUID(), getSeqNo(), src, dst, Priority_HIGH),
-		Payload: &PNTaaSPacket_DataContent{
+		Payload: &RTDEXPacket_DataContent{
 			DataContent: &DataContent{
 				Name:     name,
 				Checksum: checksum,
@@ -119,10 +119,10 @@ func CreateDataContentPacket(src, dst uint32, name string, checksum uint32, data
 	return pkt
 }
 
-func CreateAcknowledgementPacket(src, dst, uid uint32, tx_timestamp uint64) *PNTaaSPacket {
-	pkt := &PNTaaSPacket{
+func CreateAcknowledgementPacket(src, dst, uid uint32, tx_timestamp uint64) *RTDEXPacket {
+	pkt := &RTDEXPacket{
 		Header: createHeader(PacketType_ACKNOWLEDGEMENT, uid, getSeqNo(), src, dst, Priority_HIGH),
-		Payload: &PNTaaSPacket_Acknowledgement{
+		Payload: &RTDEXPacket_Acknowledgement{
 			Acknowledgement: &Acknowledgement{
 				Latency: time.Since(time.Unix(0, int64(tx_timestamp))).Microseconds(),
 			},
@@ -132,10 +132,10 @@ func CreateAcknowledgementPacket(src, dst, uid uint32, tx_timestamp uint64) *PNT
 	return pkt
 }
 
-func CreateErrorMessagePacket(src, dst, uid uint32, errorCode ErrorCode) *PNTaaSPacket {
-	pkt := &PNTaaSPacket{
+func CreateErrorMessagePacket(src, dst, uid uint32, errorCode ErrorCode) *RTDEXPacket {
+	pkt := &RTDEXPacket{
 		Header: createHeader(PacketType_ERROR_MESSAGE, uid, getSeqNo(), src, dst, Priority_HIGH),
-		Payload: &PNTaaSPacket_ErrorMessage{
+		Payload: &RTDEXPacket_ErrorMessage{
 			ErrorMessage: &ErrorMessage{
 				ErrorCode: errorCode,
 			},
@@ -145,10 +145,10 @@ func CreateErrorMessagePacket(src, dst, uid uint32, errorCode ErrorCode) *PNTaaS
 	return pkt
 }
 
-func CreateHeartbeatPacket(src, dst uint32) *PNTaaSPacket {
-	pkt := &PNTaaSPacket{
+func CreateHeartbeatPacket(src, dst uint32) *RTDEXPacket {
+	pkt := &RTDEXPacket{
 		Header: createHeader(PacketType_HEARTBEAT, getUID(), getSeqNo(), src, dst, Priority_LOW),
-		Payload: &PNTaaSPacket_Heartbeat{
+		Payload: &RTDEXPacket_Heartbeat{
 			Heartbeat: &Heartbeat{
 				Timestamp: getTimestamp(),
 			},

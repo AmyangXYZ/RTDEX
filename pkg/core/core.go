@@ -24,14 +24,22 @@ type Server interface {
 	ID() uint32
 	Start()
 	Stop()
-	Send(pkt *packet.PNTaaSPacket, dstAddr *net.UDPAddr) error
+	Send(pkt *packet.RTDEXPacket, dstAddr *net.UDPAddr) error
 }
 
 type Cache interface {
-	Set(name string, value interface{}, freshness time.Duration)
-	Get(name string) interface{}
-	GetAll() []interface{}
+	Set(name string, value *CacheItem)
+	Get(name string) *CacheItem
+	GetAll() []*CacheItem
 	Housekeeping()
+}
+
+type CacheItem struct {
+	Name     string
+	Data     []byte
+	Size     int
+	Expiry   time.Time
+	Checksum uint32
 }
 
 type SessionManager interface {
@@ -49,7 +57,7 @@ type Session interface {
 	Lifetime() int
 	RemoteAddr() string
 	UpdateRemoteAddr(addr *net.UDPAddr)
-	HandlePacket(pkt *packet.PNTaaSPacket)
+	HandlePacket(pkt *packet.RTDEXPacket)
 }
 
 type SlotManager interface {

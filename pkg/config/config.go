@@ -3,29 +3,37 @@ package config
 import "time"
 
 var DefaultConfig = Config{
-	UDPAddr:              ":9999",
-	PktBufSize:           10240,
-	ChunkSize:            8000,
-	PktQueueSize:         1024,
-	SlotframeSize:        127,
-	SlotDuration:         1 * time.Microsecond,
-	AckMaxRetries:        3,
-	AckTimeout:           50 * time.Millisecond,
-	MaxMissedAcks:        3,
-	InitialLifetime:      128, // seconds
-	HouseKeepingInterval: 500 * time.Millisecond,
+	ServerID:              1,
+	ServerAddr:            ":9999",
+	AuthToken:             123,
+	PktBufSize:            10240,
+	ChunkSize:             8000,
+	PktQueueSize:          1024,
+	SlotframeSize:         127,
+	SlotDuration:          1 * time.Microsecond,
+	AckMaxRetries:         3,
+	AckTimeout:            50 * time.Millisecond,
+	MaxMissedAcks:         3,
+	SessionLifetime:       128, // seconds
+	HeartbeatInterval:     10 * time.Millisecond,
+	RetryDelay:            500 * time.Millisecond,
+	ClientResponseTimeout: 3 * time.Second,
 }
 
 type Config struct {
-	UDPAddr              string
-	PktBufSize           int
-	ChunkSize            int
-	PktQueueSize         int
-	SlotframeSize        int
-	SlotDuration         time.Duration
-	AckMaxRetries        int
-	AckTimeout           time.Duration
-	MaxMissedAcks        int
-	InitialLifetime      int
-	HouseKeepingInterval time.Duration
+	ServerID              uint32
+	ServerAddr            string
+	AuthToken             uint32
+	PktBufSize            int
+	ChunkSize             int
+	PktQueueSize          int
+	SlotframeSize         int
+	SlotDuration          time.Duration
+	AckMaxRetries         int
+	AckTimeout            time.Duration
+	MaxMissedAcks         int
+	SessionLifetime       int
+	HeartbeatInterval     time.Duration
+	RetryDelay            time.Duration
+	ClientResponseTimeout time.Duration
 }

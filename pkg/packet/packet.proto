@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package ndn-rt;
+package rtdex;
 
-option go_package = "github.com/AmyangXYZ/rtdex/pkg/packet";
+option go_package = "pkg/packet";
 
 // Enum for packet types
 enum PacketType {
@@ -15,10 +15,10 @@ enum PacketType {
   DATA_INTEREST = 5;
   DATA_CONTENT = 6;
   ACKNOWLEDGEMENT = 7;
-  CONFIGURATION = 9;
 
   // Medium Priority: ACK required  
   STATISTICS = 8;
+  CONFIGURATION = 9;
 
   // Low Priority: Best-effort delivery
   HEARTBEAT = 10;
@@ -32,11 +32,12 @@ enum Priority {
   HIGH = 3;
 }
 
-// Enum for device type
-enum DeviceType {
-  UNKNOWN_DEVICE_TYPE = 0;
-  MS =  1;
-  UE = 2;
+// Enum for client type
+enum ClientType {
+  UNKNOWN_CLIENT_TYPE = 0;
+  SATELLITE = 1;
+  RECEIVER = 2;
+  UAV = 3;
 }
 
 // Enum for error codes
@@ -65,8 +66,9 @@ message PacketHeader {
 // Join Request
 message JoinRequest {
   uint32 id = 1;
-  DeviceType type = 2;
-  uint32 authentication_token = 3;
+  string namespace = 2;
+  ClientType type = 3;
+  uint32 authentication_token = 4;
 }
 
 // Join Response
@@ -121,7 +123,7 @@ message Heartbeat {
 }
 
 // Main packet message that encapsulates all types
-message PNTaaSPacket {
+message RTDEXPacket {
   PacketHeader header = 1;
   oneof payload {
     JoinRequest join_request = 2;

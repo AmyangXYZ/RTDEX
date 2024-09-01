@@ -12,7 +12,7 @@ import (
 )
 
 type RTDEXEngine struct {
-	config         config.Config
+	cfg            config.Config
 	server         core.Server
 	sessionManager core.SessionManager
 	slotManager    core.SlotManager
@@ -21,10 +21,10 @@ type RTDEXEngine struct {
 	cancel         context.CancelFunc
 }
 
-func NewEngine(config config.Config) *RTDEXEngine {
+func NewEngine(cfg config.Config) *RTDEXEngine {
 	engine := &RTDEXEngine{
-		config: config,
-		cache:  cache.NewCache(),
+		cfg:   cfg,
+		cache: cache.NewCache(),
 	}
 	engine.server = server.NewServer(engine)
 	engine.sessionManager = session.NewSessionManager(engine)
@@ -34,7 +34,7 @@ func NewEngine(config config.Config) *RTDEXEngine {
 }
 
 func (e *RTDEXEngine) Config() *config.Config {
-	return &e.config
+	return &e.cfg
 }
 
 func (e *RTDEXEngine) Start() {

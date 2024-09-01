@@ -10,38 +10,36 @@ A real-time data exchange protocol and library inspired by Named-Data Networking
 - Protocol Buffer integration
 - Flexible session management and housekeeping
 - Data chunking and checksum
-- WebSocket support for monitoring
 
 ## Architecture
 
 ```mermaid
 graph BT
-    subgraph Server[Network Server]
+    subgraph Server[Engine]
         S_UDPSocket[UDP Socket]
         S_ProtoBuf[Protocol Buffer Encoding/Decoding]
         S_Cache[In-Network Cache]
 
         subgraph S_SessionMgr[Session Manager]
-            subgraph S_Session[Client Session]
+            subgraph S_Session[Client Session i]
                 S_PriorityQueues[Priority Queues]
                 S_TimeAwareScheduler[Time-Aware Scheduler]
             end
         end
 
         S_SlotMgr[Slot Manager]
-        S_PktSniffer[Packet Sniffer]
         S_WebServer[Web Server]
         S_WebUI[Web UI]
     end
 
-    subgraph Publisher[Publisher]
+    subgraph Publisher[Publisher client]
         P_UDPSocket[UDP Socket]
         P_ProtoBuf[Protocol Buffer Encoding/Decoding]
         P_DataProcessing[Data Processing]
         P_PublishLogic[Publish Logic]
     end
 
-    subgraph Subscriber[Subscriber]
+    subgraph Subscriber[Subscriber client]
         Sub_UDPSocket[UDP Socket]
         Sub_ProtoBuf[Protocol Buffer Encoding/Decoding]
         Sub_DataProcessing[Data Processing]
@@ -66,8 +64,7 @@ graph BT
 
     S_ProtoBuf <--> S_Cache
 
-    S_ProtoBuf --> S_PktSniffer
-    S_PktSniffer --> S_WebServer
+    S_Cache --> S_WebServer
     S_SessionMgr --> S_WebServer
 
     S_WebServer <-- WebSocket --> S_WebUI
@@ -75,25 +72,25 @@ graph BT
 
 ## Usage
 
-Publish data:
+```go
+engine := engine.NewEngine(config.DefaultConfig)
+engine.Start()
 
-```python
-client.put('/sensors/outdoor/temperature', b'22.5', freshness=300)
-client.put('/config/system/network', json.dumps({'mode': 'active', 'interval': 5}).encode(), freshness=3600)
-client.put('/data/images/2023/06/01/sunset.jpg', open('sunset.jpg', 'rb').read(), freshness=86400)
-```
+client := client.NewClient(3, "device-type-1", config.DefaultConfig)
+client.Connect()
+client.Put("/data/test", []byte("test"), 60)
 
-Retrieve data:
+data, err := client.Get("/data/test", time.Second*10)
 
-```python
-data = client.get('/sensors/outdoor/temperature')
-data = client.get('/config/system/network')
-data = client.get('/data/images/2023/06/01/sunset.jpg')
+if err != nil {
+    fmt.Println(err)
+}
+fmt.Println("data:", string(data))
+
+client.Disconnect()
+
+engine.Stop()
 ```
 
 ![packets](./screenshot-packets.png)
 ![cache](./screenshot-data.png)
-
-## Note
-
-Use `pip install protobuf==3.20.*`

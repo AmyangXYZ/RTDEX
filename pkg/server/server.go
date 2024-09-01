@@ -19,7 +19,7 @@ type Server struct {
 
 func NewServer(engine core.Engine) core.Server {
 	logger := log.New(log.Writer(), "[Server] ", 0)
-	addr, err := net.ResolveUDPAddr("udp", engine.Config().UDPAddr)
+	addr, err := net.ResolveUDPAddr("udp", engine.Config().ServerAddr)
 	if err != nil {
 		logger.Println(err)
 		return nil
@@ -58,7 +58,7 @@ func (s *Server) Start() {
 				s.logger.Println(err)
 				continue
 			}
-			pkt := &packet.PNTaaSPacket{}
+			pkt := &packet.RTDEXPacket{}
 			if err = proto.Unmarshal(buf[:n], pkt); err != nil {
 				s.logger.Println("Unmarshaling error: ", err)
 				continue
@@ -71,7 +71,7 @@ func (s *Server) Start() {
 				session.HandlePacket(pkt)
 			} else if pkt.Header.PacketType == packet.PacketType_JOIN_REQUEST {
 				token := pkt.GetJoinRequest().AuthenticationToken
-				if token == 123 {
+				if token == s.engine.Config().AuthToken {
 					s.logger.Println("New session", pkt.Header.SourceId)
 					src := pkt.Header.SourceId
 					// type_ := pkt.GetJoinRequest().Type
@@ -90,11 +90,11 @@ func (s *Server) Start() {
 }
 
 func (s *Server) Stop() {
-	s.logger.Println("Server stopping")
+	s.logger.Println("Stop server")
 	s.socket.Close()
 }
 
-func (s *Server) Send(pkt *packet.PNTaaSPacket, dstAddr *net.UDPAddr) error {
+func (s *Server) Send(pkt *packet.RTDEXPacket, dstAddr *net.UDPAddr) error {
 	buf, err := proto.Marshal(pkt)
 	if err != nil {
 		return err

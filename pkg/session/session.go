@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"fmt"
+	"hash/crc32"
 	"log"
 	"net"
 	"sync"
@@ -14,7 +15,7 @@ import (
 )
 
 type pktCallback struct {
-	Pkt *packet.PNTaaSPacket
+	Pkt *packet.RTDEXPacket
 	Cb  func()
 }
 
@@ -26,9 +27,9 @@ type Session struct {
 	logger                 *log.Logger
 	pktAckCallbacks        sync.Map
 	pktErrCallbacks        sync.Map
-	outQueueHighPriority   chan *packet.PNTaaSPacket
-	outQueueMediumPriority chan *packet.PNTaaSPacket
-	outQueueLowPriority    chan *packet.PNTaaSPacket
+	outQueueHighPriority   chan *packet.RTDEXPacket
+	outQueueMediumPriority chan *packet.RTDEXPacket
+	outQueueLowPriority    chan *packet.RTDEXPacket
 	slotIncrementSignal    chan int
 	isSending              atomic.Bool
 	ctx                    context.Context
@@ -41,12 +42,12 @@ func NewSession(engine core.Engine, id uint32, remoteAddr *net.UDPAddr) *Session
 	return &Session{
 		engine:                 engine,
 		id:                     id,
-		lifetime:               engine.Config().InitialLifetime,
+		lifetime:               engine.Config().SessionLifetime,
 		logger:                 logger,
 		remoteAddr:             remoteAddr,
-		outQueueHighPriority:   make(chan *packet.PNTaaSPacket, engine.Config().PktQueueSize),
-		outQueueMediumPriority: make(chan *packet.PNTaaSPacket, engine.Config().PktQueueSize),
-		outQueueLowPriority:    make(chan *packet.PNTaaSPacket, engine.Config().PktQueueSize),
+		outQueueHighPriority:   make(chan *packet.RTDEXPacket, engine.Config().PktQueueSize),
+		outQueueMediumPriority: make(chan *packet.RTDEXPacket, engine.Config().PktQueueSize),
+		outQueueLowPriority:    make(chan *packet.RTDEXPacket, engine.Config().PktQueueSize),
 		slotIncrementSignal:    make(chan int),
 		ctx:                    ctx,
 		cancel:                 cancel,
@@ -71,7 +72,7 @@ func (s *Session) RemoteAddr() string {
 }
 
 func (s *Session) ResetLifetime() {
-	s.lifetime = s.engine.Config().InitialLifetime
+	s.lifetime = s.engine.Config().SessionLifetime
 }
 
 func (s *Session) SlotIncrement(slot int) {
@@ -140,7 +141,7 @@ func (s *Session) processQueuesTimeAware() {
 	}
 }
 
-func (s *Session) tryGetPacket(queue chan *packet.PNTaaSPacket) *packet.PNTaaSPacket {
+func (s *Session) tryGetPacket(queue chan *packet.RTDEXPacket) *packet.RTDEXPacket {
 	select {
 	case pkt := <-queue:
 		return pkt
@@ -149,14 +150,14 @@ func (s *Session) tryGetPacket(queue chan *packet.PNTaaSPacket) *packet.PNTaaSPa
 	}
 }
 
-func (s *Session) sendPacket(pkt *packet.PNTaaSPacket) {
+func (s *Session) sendPacket(pkt *packet.RTDEXPacket) {
 	s.logger.Printf("Send %s-0x%X\n", pkt.Header.PacketType, pkt.Header.PacketUid)
 	if err := s.engine.Server().Send(pkt, s.remoteAddr); err != nil {
 		s.logger.Println(err)
 	}
 }
 
-func (s *Session) HandlePacket(pkt *packet.PNTaaSPacket) {
+func (s *Session) HandlePacket(pkt *packet.RTDEXPacket) {
 	s.logger.Printf("Received %s-0x%X\n", pkt.Header.PacketType, pkt.Header.PacketUid)
 	if pkt.Header.Priority > packet.Priority_LOW && pkt.Header.PacketType != packet.PacketType_ACKNOWLEDGEMENT {
 		s.sendAck(pkt.Header.PacketUid, pkt.Header.Timestamp)
@@ -184,15 +185,49 @@ func (s *Session) HandlePacket(pkt *packet.PNTaaSPacket) {
 		size := pkt.GetDataRegister().Size
 		freshness := pkt.GetDataRegister().Freshness
 		s.logger.Printf("Received data register request for %s, size: %d, freshness: %d", name, size, freshness)
-		s.engine.Cache().Set(name, []byte{}, time.Duration(freshness)*time.Second)
+		s.engine.Cache().Set(
+			name,
+			&core.CacheItem{
+				Name:     name,
+				Data:     nil,
+				Size:     int(size),
+				Checksum: 0,
+				Expiry:   time.Now().Add(time.Duration(freshness) * time.Second),
+			},
+		)
 	case packet.PacketType_DATA_CONTENT:
-
+		name := pkt.GetDataContent().Name
+		data := pkt.GetDataContent().Data
+		checksum := pkt.GetDataContent().Checksum
+		if cacheItem := s.engine.Cache().Get(name); cacheItem != nil {
+			if crc32.ChecksumIEEE(data) == checksum {
+				cacheItem.Data = data
+				cacheItem.Size = len(data)
+				cacheItem.Checksum = checksum
+				s.engine.Cache().Set(name, cacheItem)
+				s.logger.Printf("Received data content for %s, checksum: %X, size: %d", name, checksum, len(data))
+			} else {
+				s.logger.Printf("Checksum mismatch for %s, %X:%X, %d", name, crc32.ChecksumIEEE(data), checksum, len(data))
+				s.sendErrorMessage(pkt.Header.PacketUid, packet.ErrorCode_DATA_CHECK_SUM_FAILED)
+			}
+		} else {
+			s.logger.Printf("Data not registered for %s", name)
+			s.sendErrorMessage(pkt.Header.PacketUid, packet.ErrorCode_DATA_NOT_FOUND)
+		}
 	case packet.PacketType_DATA_INTEREST:
-
+		name := pkt.GetDataInterest().Name
+		if cacheItem := s.engine.Cache().Get(name); cacheItem == nil {
+			s.logger.Printf("Data not found for %s", name)
+			s.sendErrorMessage(pkt.Header.PacketUid, packet.ErrorCode_DATA_NOT_FOUND)
+		} else if cacheItem.Size == 0 || cacheItem.Checksum == 0 {
+			s.logger.Printf("Data not ready for %s", name)
+			s.sendErrorMessage(pkt.Header.PacketUid, packet.ErrorCode_DATA_NOT_READY)
+		} else {
+			s.sendDataContent(name, cacheItem)
+		}
 	default:
-		return
+		s.logger.Printf("Received unknown packet type: %s", pkt.Header.PacketType)
 	}
-	return
 }
 
 func (s *Session) sendAck(uid uint32, tx_timestamp uint64) {
@@ -213,24 +248,24 @@ func (s *Session) sendJoinResponse() {
 	s.pktAckCallbacks.Store(pkt.Header.PacketUid, cb)
 }
 
-// func (s *Session) sendDataContent(name string, cachedData *CachedData) {
-// 	pkt := packet.CreateDataContentPacket(server.ID, s.ID, name, cachedData.Checksum, cachedData.data)
-// 	s.outQueueHighPriority <- pkt
-// 	ackCb := &pktCallback{
-// 		Pkt: pkt,
-// 		Cb:  s.ackTimeoutCallback(pkt),
-// 	}
-// 	s.pktAckCallbacks.Store(pkt.Header.PacketUid, ackCb)
-// 	errCb := &pktCallback{
-// 		Pkt: pkt,
-// 		Cb: func() {
-// 			s.outQueueHighPriority <- pkt // retransmit
-// 		},
-// 	}
-// 	s.pktErrCallbacks.Store(pkt.Header.PacketUid, errCb)
-// }
+func (s *Session) sendDataContent(name string, cacheItem *core.CacheItem) {
+	pkt := packet.CreateDataContentPacket(s.engine.Server().ID(), s.id, name, cacheItem.Checksum, cacheItem.Data)
+	s.outQueueHighPriority <- pkt
+	ackCb := &pktCallback{
+		Pkt: pkt,
+		Cb:  s.ackTimeoutCallback(pkt),
+	}
+	s.pktAckCallbacks.Store(pkt.Header.PacketUid, ackCb)
+	errCb := &pktCallback{
+		Pkt: pkt,
+		Cb: func() {
+			s.outQueueHighPriority <- pkt // retransmit
+		},
+	}
+	s.pktErrCallbacks.Store(pkt.Header.PacketUid, errCb)
+}
 
-func (s *Session) ackTimeoutCallback(pkt *packet.PNTaaSPacket) func() {
+func (s *Session) ackTimeoutCallback(pkt *packet.RTDEXPacket) func() {
 	retries := 0
 	var timer *time.Timer
 	cb := func() {

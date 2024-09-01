@@ -51,7 +51,7 @@ func (s *SlotManager) Start() {
 }
 
 func (s *SlotManager) Stop() {
-	s.logger.Println("Stopping slot manager")
+	s.logger.Println("Stop slot manager")
 	close(s.slotIncrementSignal)
 }
 
