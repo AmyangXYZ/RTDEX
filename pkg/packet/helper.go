@@ -2,6 +2,7 @@ package packet
 
 import (
 	"math/rand/v2"
+	sync "sync"
 	"time"
 
 	"google.golang.org/protobuf/proto"
@@ -13,7 +14,16 @@ const (
 
 var (
 	sequenceNumber = 0
+	PacketPool     sync.Pool
 )
+
+func init() {
+	PacketPool = sync.Pool{
+		New: func() any {
+			return &RTDEXPacket{}
+		},
+	}
+}
 
 func getUID() uint32 {
 	return rand.Uint32()
@@ -48,13 +58,13 @@ func createHeader(packetType PacketType, uid, seqNo, src, dst uint32, priority P
 	}
 }
 
-func CreateJoinRequestPacket(src, dst uint32, id uint32, type_ ClientType, token uint32) *RTDEXPacket {
+func CreateJoinRequestPacket(src, dst uint32, id uint32, namespace string, token uint32) *RTDEXPacket {
 	pkt := &RTDEXPacket{
 		Header: createHeader(PacketType_JOIN_REQUEST, getUID(), getSeqNo(), src, dst, Priority_HIGH),
 		Payload: &RTDEXPacket_JoinRequest{
 			JoinRequest: &JoinRequest{
 				Id:                  id,
-				Type:                type_,
+				Namespace:           namespace,
 				AuthenticationToken: token,
 			},
 		},

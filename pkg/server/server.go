@@ -58,32 +58,35 @@ func (s *Server) Start() {
 				s.logger.Println(err)
 				continue
 			}
-			pkt := &packet.RTDEXPacket{}
+			pkt := packet.PacketPool.Get().(*packet.RTDEXPacket)
+			pkt.Reset()
 			if err = proto.Unmarshal(buf[:n], pkt); err != nil {
 				s.logger.Println("Unmarshaling error: ", err)
+				packet.PacketPool.Put(pkt)
 				continue
 			}
 
-			if session := s.engine.SessionManager().GetSession(pkt.Header.SourceId); session != nil && session.Lifetime() > 0 {
+			if session := s.engine.SessionManager().GetSession(pkt.GetHeader().SourceId); session != nil && session.Lifetime() > 0 {
 				if session.RemoteAddr() != addr.String() {
 					session.UpdateRemoteAddr(addr)
 				}
 				session.HandlePacket(pkt)
-			} else if pkt.Header.PacketType == packet.PacketType_JOIN_REQUEST {
+			} else if pkt.GetHeader().PacketType == packet.PacketType_JOIN_REQUEST {
 				token := pkt.GetJoinRequest().AuthenticationToken
 				if token == s.engine.Config().AuthToken {
-					s.logger.Println("New session", pkt.Header.SourceId)
-					src := pkt.Header.SourceId
-					// type_ := pkt.GetJoinRequest().Type
-					session := s.engine.SessionManager().CreateSession(src, addr)
+					id := pkt.GetHeader().SourceId
+					namespace := pkt.GetJoinRequest().Namespace
+					s.logger.Printf("New session id:%d, namespace:%s", id, namespace)
+					session := s.engine.SessionManager().CreateSession(id, namespace, addr)
 					go session.Start()
 					session.HandlePacket(pkt)
 				} else {
 					s.logger.Println("Invalid token")
-					s.Send(packet.CreateAcknowledgementPacket(s.id, pkt.Header.SourceId, pkt.Header.PacketUid, pkt.Header.Timestamp), addr)
-					s.Send(packet.CreateErrorMessagePacket(s.id, pkt.Header.SourceId, pkt.Header.PacketUid, packet.ErrorCode_AUTHENTICATION_FAILED), addr)
+					s.Send(packet.CreateAcknowledgementPacket(s.id, pkt.GetHeader().SourceId, pkt.GetHeader().PacketUid, pkt.GetHeader().Timestamp), addr)
+					s.Send(packet.CreateErrorMessagePacket(s.id, pkt.GetHeader().SourceId, pkt.GetHeader().PacketUid, packet.ErrorCode_AUTHENTICATION_FAILED), addr)
 				}
 			}
+			packet.PacketPool.Put(pkt)
 		}
 	}
 

@@ -45,7 +45,7 @@ type CacheItem struct {
 
 type SessionManager interface {
 	Start()
-	CreateSession(id uint32, addr *net.UDPAddr) Session
+	CreateSession(id uint32, namespace string, addr *net.UDPAddr) Session
 	GetSession(id uint32) Session
 	GetAllSessions() []Session
 	Housekeeping()

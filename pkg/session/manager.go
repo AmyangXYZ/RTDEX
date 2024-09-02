@@ -37,8 +37,8 @@ func (m *SessionManager) WatchSlotSignal() {
 	}
 }
 
-func (m *SessionManager) CreateSession(id uint32, remoteAddr *net.UDPAddr) core.Session {
-	session := NewSession(m.engine, id, remoteAddr)
+func (m *SessionManager) CreateSession(id uint32, namespace string, remoteAddr *net.UDPAddr) core.Session {
+	session := NewSession(m.engine, id, namespace, remoteAddr)
 	m.Sessions.Store(id, session)
 	return session
 }

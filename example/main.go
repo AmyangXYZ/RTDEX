@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/AmyangXYZ/rtdex"
 )
@@ -9,8 +10,8 @@ import (
 func main() {
 	engine := rtdex.NewEngine(rtdex.DefaultConfig)
 	go engine.Start()
-
-	client := rtdex.NewClient(3, "type-A-device", rtdex.DefaultConfig)
+	time.Sleep(1 * time.Second)
+	client := rtdex.NewClient(3, "namespace-A", rtdex.DefaultConfig)
 	client.Connect()
 	client.Put("/data/test", []byte("test"), 10)
 

@@ -24,7 +24,7 @@ func NewSlotManager(engine core.Engine) core.SlotManager {
 		slotframeSize:       engine.Config().SlotframeSize,
 		slotDuration:        engine.Config().SlotDuration,
 		slotIncrementSignal: make(chan int),
-		logger:              log.New(log.Writer(), "[SlotMgr] ", 0),
+		logger:              log.New(log.Writer(), "[SlotManager] ", 0),
 	}
 }
 

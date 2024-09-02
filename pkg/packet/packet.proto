@@ -32,14 +32,6 @@ enum Priority {
   HIGH = 3;
 }
 
-// Enum for client type
-enum ClientType {
-  UNKNOWN_CLIENT_TYPE = 0;
-  SATELLITE = 1;
-  RECEIVER = 2;
-  UAV = 3;
-}
-
 // Enum for error codes
 enum ErrorCode {
   UNKNOWN_ERROR = 0;
@@ -67,8 +59,7 @@ message PacketHeader {
 message JoinRequest {
   uint32 id = 1;
   string namespace = 2;
-  ClientType type = 3;
-  uint32 authentication_token = 4;
+  uint32 authentication_token = 3;
 }
 
 // Join Response

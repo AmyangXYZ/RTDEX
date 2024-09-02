@@ -16,6 +16,7 @@ import (
 
 type Client struct {
 	id           uint32
+	namespace    string
 	cfg          config.Config
 	sessionToken uint32
 	socket       *net.UDPConn
@@ -23,11 +24,12 @@ type Client struct {
 	logger       *log.Logger
 }
 
-func NewClient(id uint32, deviceType string, cfg config.Config) *Client {
+func NewClient(id uint32, namespace string, cfg config.Config) *Client {
 	return &Client{
-		id:     id,
-		cfg:    cfg,
-		logger: log.New(log.Writer(), fmt.Sprintf("[Client-%d] ", id), 0),
+		id:        id,
+		namespace: namespace,
+		cfg:       cfg,
+		logger:    log.New(log.Writer(), fmt.Sprintf("[Client-%d] ", id), 0),
 	}
 }
 
@@ -188,7 +190,7 @@ func (c *Client) sendAck(pkt *packet.RTDEXPacket) {
 }
 
 func (c *Client) join(authToken uint32) (uint32, error) {
-	joinRequest := packet.CreateJoinRequestPacket(c.id, c.cfg.ServerID, c.id, 1, authToken)
+	joinRequest := packet.CreateJoinRequestPacket(c.id, c.cfg.ServerID, c.id, c.namespace, authToken)
 
 	if !c.sendPacket(joinRequest) {
 		return 0, errors.New("failed to join after maximum retries")
@@ -237,8 +239,8 @@ func (c *Client) registerAndUploadData(name string, data []byte, freshness uint6
 }
 
 func (c *Client) registerData(dataName string, data []byte, dataSize, freshness uint64, checksum uint32) error {
-	c.logger.Printf("Registering data: %s, size: %d, freshness: %d seconds, checksum: %X\n",
-		dataName, dataSize, freshness, checksum)
+	c.logger.Printf("Registering data: %s, size: %d, freshness: %d seconds\n",
+		dataName, dataSize, freshness)
 
 	registerPacket := packet.CreateDataRegisterPacket(c.id, c.cfg.ServerID, dataName, freshness, dataSize)
 
