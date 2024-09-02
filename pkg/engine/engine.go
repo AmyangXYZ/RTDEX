@@ -23,9 +23,10 @@ type RTDEXEngine struct {
 
 func NewEngine(cfg config.Config) *RTDEXEngine {
 	engine := &RTDEXEngine{
-		cfg:   cfg,
-		cache: cache.NewCache(),
+		cfg: cfg,
 	}
+	engine.ctx, engine.cancel = context.WithCancel(context.Background())
+	engine.cache = cache.NewCache(engine)
 	engine.server = server.NewServer(engine)
 	engine.sessionManager = session.NewSessionManager(engine)
 	engine.slotManager = slot.NewSlotManager(engine)
@@ -38,7 +39,6 @@ func (e *RTDEXEngine) Config() *config.Config {
 }
 
 func (e *RTDEXEngine) Start() {
-	e.ctx, e.cancel = context.WithCancel(context.Background())
 	go e.sessionManager.Start()
 	go e.server.Start()
 	go e.slotManager.Start()

@@ -128,6 +128,7 @@ func CreateAcknowledgementPacket(src, dst, uid uint32, tx_timestamp uint64) *RTD
 			},
 		},
 	}
+	// fmt.Println("Latency:", pkt.GetAcknowledgement().Latency)
 	pkt.Header.PayloadLength = getPayloadLength(pkt)
 	return pkt
 }

@@ -183,7 +183,7 @@ func (c *Client) waitForPacket(expectedTypes []packet.PacketType, timeout time.D
 }
 
 func (c *Client) sendAck(pkt *packet.RTDEXPacket) {
-	ackPacket := packet.CreateAcknowledgementPacket(c.id, c.cfg.ServerID, pkt.Header.PacketUid, uint64(time.Now().UnixNano()))
+	ackPacket := packet.CreateAcknowledgementPacket(c.id, c.cfg.ServerID, pkt.Header.PacketUid, pkt.Header.Timestamp)
 	c.sendPacket(ackPacket)
 }
 

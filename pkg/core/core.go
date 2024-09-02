@@ -31,6 +31,7 @@ type Cache interface {
 	Set(name string, value *CacheItem)
 	Get(name string) *CacheItem
 	GetAll() []*CacheItem
+	ClearAll()
 	Housekeeping()
 }
 

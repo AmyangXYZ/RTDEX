@@ -17,14 +17,16 @@ type Node struct {
 }
 
 type Cache struct {
+	engine core.Engine
 	root   *Node
 	logger *log.Logger
 }
 
 // NewCache creates and initializes a new Cache instance.
 // It starts a goroutine for housekeeping and returns a pointer to the new Cache.
-func NewCache() *Cache {
+func NewCache(engine core.Engine) *Cache {
 	cache := &Cache{
+		engine: engine,
 		root:   &Node{segment: ""},
 		logger: log.New(log.Writer(), "[Cache] ", 0),
 	}
@@ -83,20 +85,33 @@ func (c *Cache) GetAll() []*core.CacheItem {
 
 func (c *Cache) Housekeeping() {
 	ticker := time.NewTicker(time.Second)
-	for range ticker.C {
-		queue := []*Node{c.root}
-		for len(queue) > 0 {
-			node := queue[0]
-			queue = queue[1:]
-			node.children.Range(func(_, value interface{}) bool {
-				child := value.(*Node)
-				queue = append(queue, child)
-				return true
-			})
-			if node.value != nil && time.Now().After(node.value.Expiry) {
-				c.logger.Printf("Removed expired cache %s\n", node.name)
-				node.value = nil
+	for {
+		select {
+		case <-c.engine.Ctx().Done():
+			c.ClearAll()
+			return
+		case <-ticker.C:
+			queue := []*Node{c.root}
+			for len(queue) > 0 {
+				node := queue[0]
+				queue = queue[1:]
+				node.children.Range(func(_, value interface{}) bool {
+					child := value.(*Node)
+					queue = append(queue, child)
+					return true
+				})
+				if node.value != nil && time.Now().After(node.value.Expiry) {
+					c.logger.Printf("Removed expired cache %s\n", node.name)
+					node.value = nil
+				}
 			}
 		}
 	}
+}
+
+func (c *Cache) ClearAll() {
+	c.root = &Node{
+		children: sync.Map{},
+	}
+	c.logger.Println("All cache cleared")
 }
