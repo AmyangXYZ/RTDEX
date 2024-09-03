@@ -22,7 +22,10 @@ func main() {
 	}
 
 	client.Disconnect()
-	fmt.Println(engine.PacketSniffer().Get(0, 100))
+	// packets := engine.PacketSniffer().Get(0, 100)
+	// for _, pkt := range packets {
+	// 	fmt.Println(pkt.Payload)
+	// }
 	go engine.Stop()
 	select {}
 }

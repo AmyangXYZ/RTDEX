@@ -42,10 +42,18 @@ func (s *PacketSniffer) Add(pkt *packet.RTDEXPacket) {
 		Priority:      pkt.GetHeader().Priority,
 		Timestamp:     pkt.GetHeader().Timestamp,
 		PayloadLength: pkt.GetHeader().PayloadLength,
-		Payload:       pkt.GetPayload(),
 	}
 	if pkt.GetHeader().PacketType == packet.PacketType_DATA_CONTENT {
-		metadata.Payload.(*packet.RTDEXPacket_DataContent).DataContent.Data = []byte("...")
+		original := pkt.GetPayload().(*packet.RTDEXPacket_DataContent).DataContent
+		metadata.Payload = &packet.RTDEXPacket_DataContent{
+			DataContent: &packet.DataContent{
+				Name:     original.Name,
+				Checksum: original.Checksum,
+				Data:     []byte("..."),
+			},
+		}
+	} else {
+		metadata.Payload = pkt.GetPayload()
 	}
 	if len(s.packets) >= s.capacity {
 		s.packets = append(s.packets[1:], metadata)
