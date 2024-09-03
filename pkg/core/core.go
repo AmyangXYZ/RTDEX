@@ -37,11 +37,11 @@ type Cache interface {
 }
 
 type CacheItem struct {
-	Name     string
-	Data     []byte
-	Size     int
-	Expiry   time.Time
-	Checksum uint32
+	Name     string    `json:"name"`
+	Data     []byte    `json:"data"`
+	Size     int       `json:"size"`
+	Expiry   time.Time `json:"expiry"`
+	Checksum uint32    `json:"checksum"`
 }
 
 type SessionManager interface {
@@ -56,7 +56,7 @@ type Session interface {
 	Start()
 	Stop()
 	ID() uint32
-	Namespace() string
+
 	Lifetime() int
 	RemoteAddr() string
 	UpdateRemoteAddr(addr *net.UDPAddr)
