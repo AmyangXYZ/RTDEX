@@ -56,7 +56,7 @@ type Session interface {
 	Start()
 	Stop()
 	ID() uint32
-
+	Namespace() string
 	Lifetime() int
 	RemoteAddr() string
 	UpdateRemoteAddr(addr *net.UDPAddr)
