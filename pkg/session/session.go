@@ -65,6 +65,10 @@ func (s *Session) ID() uint32 {
 	return s.id
 }
 
+func (s *Session) Namespace() string {
+	return s.namespace
+}
+
 func (s *Session) Lifetime() int {
 	return s.lifetime
 }
