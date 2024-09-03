@@ -17,6 +17,7 @@ type Engine interface {
 	SessionManager() SessionManager
 	SlotManager() SlotManager
 	Cache() Cache
+	PacketSniffer() PacketSniffer
 	Ctx() context.Context
 }
 
@@ -66,4 +67,22 @@ type SlotManager interface {
 	Stop()
 	Slot() int
 	SlotSignal() <-chan int
+}
+
+type PacketMeta struct {
+	UID           uint32            `json:"uid"`
+	Type          packet.PacketType `json:"type"`
+	Src           uint32            `json:"src"`
+	Dst           uint32            `json:"dst"`
+	Seq           uint32            `json:"seq"`
+	Priority      packet.Priority   `json:"priority"`
+	Timestamp     uint64            `json:"timestamp"`
+	PayloadLength uint32            `json:"payload_length"`
+	Payload       interface{}       `json:"payload"`
+}
+
+type PacketSniffer interface {
+	Add(pkt *packet.RTDEXPacket)
+	Get(startIndex, endIndex int) []*PacketMeta
+	Clear()
 }

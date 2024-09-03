@@ -9,6 +9,7 @@ import (
 	"github.com/AmyangXYZ/rtdex/pkg/server"
 	"github.com/AmyangXYZ/rtdex/pkg/session"
 	"github.com/AmyangXYZ/rtdex/pkg/slot"
+	"github.com/AmyangXYZ/rtdex/pkg/sniffer"
 )
 
 type RTDEXEngine struct {
@@ -18,6 +19,7 @@ type RTDEXEngine struct {
 	slotManager    core.SlotManager
 	cache          core.Cache
 	ctx            context.Context
+	packetSniffer  core.PacketSniffer
 	cancel         context.CancelFunc
 }
 
@@ -30,7 +32,7 @@ func NewEngine(cfg config.Config) *RTDEXEngine {
 	engine.server = server.NewServer(engine)
 	engine.sessionManager = session.NewSessionManager(engine)
 	engine.slotManager = slot.NewSlotManager(engine)
-
+	engine.packetSniffer = sniffer.NewPacketSniffer(engine)
 	return engine
 }
 
@@ -63,6 +65,10 @@ func (e *RTDEXEngine) SlotManager() core.SlotManager {
 
 func (e *RTDEXEngine) Cache() core.Cache {
 	return e.cache
+}
+
+func (e *RTDEXEngine) PacketSniffer() core.PacketSniffer {
+	return e.packetSniffer
 }
 
 func (e *RTDEXEngine) Ctx() context.Context {

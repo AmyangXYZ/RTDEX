@@ -65,7 +65,7 @@ func (s *Server) Start() {
 				packet.PacketPool.Put(pkt)
 				continue
 			}
-
+			s.engine.PacketSniffer().Add(pkt)
 			if session := s.engine.SessionManager().GetSession(pkt.GetHeader().SourceId); session != nil && session.Lifetime() > 0 {
 				if session.RemoteAddr() != addr.String() {
 					session.UpdateRemoteAddr(addr)
@@ -98,6 +98,7 @@ func (s *Server) Stop() {
 }
 
 func (s *Server) Send(pkt *packet.RTDEXPacket, dstAddr *net.UDPAddr) error {
+	s.engine.PacketSniffer().Add(pkt)
 	buf, err := proto.Marshal(pkt)
 	if err != nil {
 		return err

@@ -15,6 +15,7 @@ var DefaultConfig = Config{
 	AckTimeout:            50 * time.Millisecond,
 	MaxMissedAcks:         3,
 	SessionLifetime:       128, // seconds
+	PacketSnifferCapacity: 500,
 	HeartbeatInterval:     10 * time.Millisecond,
 	RetryDelay:            500 * time.Millisecond,
 	ClientResponseTimeout: 3 * time.Second,
@@ -33,6 +34,7 @@ type Config struct {
 	AckTimeout            time.Duration
 	MaxMissedAcks         int
 	SessionLifetime       int
+	PacketSnifferCapacity int
 	HeartbeatInterval     time.Duration
 	RetryDelay            time.Duration
 	ClientResponseTimeout time.Duration

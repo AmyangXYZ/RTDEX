@@ -22,6 +22,7 @@ func main() {
 	}
 
 	client.Disconnect()
+	fmt.Println(engine.PacketSniffer().Get(0, 100))
 	go engine.Stop()
 	select {}
 }

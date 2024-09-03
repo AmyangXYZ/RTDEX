@@ -12,6 +12,8 @@ import (
 type Engine = core.Engine
 type Client = client.Client
 type Config = config.Config
+type CacheItem = core.CacheItem
+type PacketMeta = core.PacketMeta
 
 var NewEngine = engine.NewEngine
 var NewClient = client.NewClient
