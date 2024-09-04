@@ -2,38 +2,37 @@ package sniffer
 
 import (
 	"log"
-	"sync"
 
 	"github.com/AmyangXYZ/rtdex/pkg/core"
 	"github.com/AmyangXYZ/rtdex/pkg/packet"
 )
 
 type PacketSniffer struct {
-	engine   core.Engine
-	packets  []*core.PacketMeta
-	mu       sync.RWMutex
-	capacity int
-	logger   *log.Logger
+	engine     core.Engine
+	count      int
+	packetChan chan *core.PacketMeta
+	capacity   int
+	logger     *log.Logger
 }
 
 func NewPacketSniffer(engine core.Engine) *PacketSniffer {
 	s := &PacketSniffer{
-		engine:   engine,
-		packets:  make([]*core.PacketMeta, 0, engine.Config().PacketSnifferCapacity),
-		capacity: engine.Config().PacketSnifferCapacity,
-		logger:   log.New(log.Writer(), "[PacketSniffer] ", 0),
+		engine:     engine,
+		packetChan: make(chan *core.PacketMeta, engine.Config().PacketSnifferCapacity),
+		capacity:   engine.Config().PacketSnifferCapacity,
+		logger:     log.New(log.Writer(), "[PacketSniffer] ", 0),
 	}
 	go func() {
 		<-engine.Ctx().Done()
-		s.Clear()
+		close(s.packetChan)
 	}()
 	return s
 }
 
 func (s *PacketSniffer) Add(pkt *packet.RTDEXPacket) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.count++
 	metadata := &core.PacketMeta{
+		Count:         s.count,
 		UID:           pkt.GetHeader().PacketUid,
 		Type:          pkt.GetHeader().PacketType,
 		Src:           pkt.GetHeader().SourceId,
@@ -55,28 +54,20 @@ func (s *PacketSniffer) Add(pkt *packet.RTDEXPacket) {
 	} else {
 		metadata.Payload = pkt.GetPayload()
 	}
-	if len(s.packets) >= s.capacity {
-		s.packets = append(s.packets[1:], metadata)
-	} else {
-		s.packets = append(s.packets, metadata)
+
+	select {
+	case <-s.engine.Ctx().Done():
+		s.logger.Println("Stop packet streaming")
+		return
+	case s.packetChan <- metadata:
+		// Packet added to channel
+	default:
+		// Channel is full, discard oldest packet and add new one
+		<-s.packetChan
+		s.packetChan <- metadata
 	}
 }
 
-func (s *PacketSniffer) Get(startIndex, endIndex int) []*core.PacketMeta {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	if startIndex < 0 {
-		return nil
-	}
-	if endIndex > len(s.packets) {
-		endIndex = len(s.packets)
-	}
-	return s.packets[startIndex:endIndex]
-}
-
-func (s *PacketSniffer) Clear() {
-	s.logger.Println("Clear logged packets")
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.packets = nil
+func (s *PacketSniffer) Stream() <-chan *core.PacketMeta {
+	return s.packetChan
 }

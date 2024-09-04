@@ -10,7 +10,7 @@ import (
 func main() {
 	engine := rtdex.NewEngine(rtdex.DefaultConfig)
 	go engine.Start()
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 	client := rtdex.NewClient(3, "namespace-A", rtdex.DefaultConfig)
 	client.Connect()
 	client.Put("/data/test", []byte("test"), 10)
@@ -22,10 +22,11 @@ func main() {
 	}
 
 	client.Disconnect()
-	// packets := engine.PacketSniffer().Get(0, 100)
-	// for _, pkt := range packets {
-	// 	fmt.Println(pkt.Payload)
-	// }
+	// go func() {
+	// 	for pkt := range engine.PacketSniffer().Stream() {
+	// 		fmt.Println(pkt)
+	// 	}
+	// }()
 	go engine.Stop()
 	select {}
 }

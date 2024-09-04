@@ -71,6 +71,7 @@ type SlotManager interface {
 }
 
 type PacketMeta struct {
+	Count         int               `json:"count"`
 	UID           uint32            `json:"uid"`
 	Type          packet.PacketType `json:"type"`
 	Src           uint32            `json:"src"`
@@ -84,6 +85,5 @@ type PacketMeta struct {
 
 type PacketSniffer interface {
 	Add(pkt *packet.RTDEXPacket)
-	Get(startIndex, endIndex int) []*PacketMeta
-	Clear()
+	Stream() <-chan *PacketMeta
 }
