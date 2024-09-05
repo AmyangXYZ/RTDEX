@@ -1,6 +1,7 @@
 package session
 
 import (
+	"log"
 	"net"
 	"sync"
 	"time"
@@ -11,11 +12,13 @@ import (
 type SessionManager struct {
 	engine   core.Engine
 	Sessions sync.Map
+	logger   *log.Logger
 }
 
 func NewSessionManager(engine core.Engine) core.SessionManager {
 	return &SessionManager{
 		engine: engine,
+		logger: log.New(log.Writer(), "[SessionManager] ", 0),
 	}
 }
 
@@ -24,6 +27,7 @@ func (m *SessionManager) Start() {
 	go m.WatchSlotSignal()
 
 	<-m.engine.Ctx().Done()
+	m.logger.Println("Stop sessions")
 	m.RemoveAllSessions()
 }
 

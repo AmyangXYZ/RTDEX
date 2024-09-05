@@ -13,15 +13,16 @@ enum PacketType {
   ERROR_MESSAGE = 3;
   DATA_REGISTER = 4;
   DATA_INTEREST = 5;
-  DATA_CONTENT = 6;
-  ACKNOWLEDGEMENT = 7;
+  DATA_INTEREST_RESPONSE = 6;
+  DATA_CONTENT = 7;
+  ACKNOWLEDGEMENT = 8;
 
   // Medium Priority: ACK required  
-  STATISTICS = 8;
-  CONFIGURATION = 9;
+  STATISTICS = 9;
+  CONFIGURATION = 10;
 
   // Low Priority: Best-effort delivery
-  HEARTBEAT = 10;
+  HEARTBEAT = 11;
 }
 
 // Enum for priority levels
@@ -72,6 +73,8 @@ message DataRegister {
   string name = 1;
   uint64 freshness = 2; // in seconds
   uint64 size = 3;
+  uint32 checksum = 4; // merkle tree, checksum of each chunk's checksum
+  uint32 num_chunks = 5;
 }
 
 // Data Interest
@@ -79,11 +82,19 @@ message DataInterest {
   string name = 1;
 }
 
+// Data Interest Response
+message DataInterestResponse {
+  string name = 1;
+  uint32 checksum = 2;
+  uint32 num_chunks = 3;
+}
+
 // Data Content
 message DataContent {
   string name = 1;
-  uint32 checksum = 2; // CRC32
-  bytes data = 3;
+  uint32 chunk_index = 2;
+  uint32 checksum = 3; // CRC32
+  bytes data = 4;
 }
 
 // Acknowledgement
@@ -121,11 +132,12 @@ message RTDEXPacket {
     JoinResponse join_response = 3;
     DataRegister data_register = 4;
     DataInterest data_interest = 5;
-    DataContent data_content = 6;
-    Acknowledgement acknowledgement = 7;
-    ErrorMessage error_message = 8;
-    Statistics statistics = 9;
-    Configuration configuration = 10;
-    Heartbeat heartbeat = 11;
+    DataInterestResponse data_interest_response = 6;
+    DataContent data_content = 7;
+    Acknowledgement acknowledgement = 8;
+    ErrorMessage error_message = 9;
+    Statistics statistics = 10;
+    Configuration configuration = 11;
+    Heartbeat heartbeat = 12;
   }
 }

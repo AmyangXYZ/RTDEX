@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"hash/crc32"
 	"log"
@@ -114,7 +115,7 @@ func (s *Session) Start() {
 }
 
 func (s *Session) Stop() {
-	s.logger.Println("Stopping session")
+	s.logger.Println("Stop session")
 	s.cancel()
 }
 
@@ -190,30 +191,50 @@ func (s *Session) HandlePacket(pkt *packet.RTDEXPacket) {
 		name := pkt.GetDataRegister().Name
 		size := pkt.GetDataRegister().Size
 		freshness := pkt.GetDataRegister().Freshness
-		s.logger.Printf("Received data register request for %s, size: %d, freshness: %d", name, size, freshness)
+		rootChecksum := pkt.GetDataRegister().Checksum
+		numChunks := pkt.GetDataRegister().NumChunks
+		s.logger.Printf("Received data register request for %s, size: %d, freshness: %d, root checksum: %X, num chunks: %d", name, size, freshness, rootChecksum, numChunks)
 		s.engine.Cache().Set(
 			name,
 			&core.CacheItem{
-				Name:     name,
-				Data:     nil,
-				Size:     int(size),
-				Checksum: 0,
-				Expiry:   time.Now().Add(time.Duration(freshness) * time.Second),
+				Name:           name,
+				Size:           int(size),
+				Checksum:       rootChecksum,
+				NumChunks:      int(numChunks),
+				Chunks:         make(map[int][]byte),
+				ChunkChecksums: make(map[int]uint32),
+				Expiry:         time.Now().Add(time.Duration(freshness) * time.Second),
 			},
 		)
 	case packet.PacketType_DATA_CONTENT:
 		name := pkt.GetDataContent().Name
+		chunkIndex := int(pkt.GetDataContent().ChunkIndex)
+		chunkChecksum := pkt.GetDataContent().Checksum
 		data := pkt.GetDataContent().Data
-		checksum := pkt.GetDataContent().Checksum
+
 		if cacheItem := s.engine.Cache().Get(name); cacheItem != nil {
-			if crc32.ChecksumIEEE(data) == checksum {
-				cacheItem.Data = data
-				cacheItem.Size = len(data)
-				cacheItem.Checksum = checksum
+			if crc32.ChecksumIEEE(data) == chunkChecksum {
+				cacheItem.Chunks[chunkIndex] = data
+				cacheItem.ChunkChecksums[chunkIndex] = chunkChecksum
+				s.logger.Printf("Received chunk %d for %s, checksum: %X", chunkIndex, name, chunkChecksum)
+
+				if len(cacheItem.Chunks) == cacheItem.NumChunks {
+					// All chunks received, verify root checksum
+					allChecksums := make([]byte, 4*cacheItem.NumChunks)
+					for i := 0; i < cacheItem.NumChunks; i++ {
+						binary.LittleEndian.PutUint32(allChecksums[i*4:], cacheItem.ChunkChecksums[i])
+					}
+					rootChecksum := crc32.ChecksumIEEE(allChecksums)
+					if rootChecksum == cacheItem.Checksum {
+						s.logger.Printf("All chunks received and verified for %s, root checksum: %X", name, rootChecksum)
+					} else {
+						s.logger.Printf("Root checksum mismatch for %s", name)
+						s.sendErrorMessage(pkt.GetHeader().PacketUid, packet.ErrorCode_DATA_CHECK_SUM_FAILED)
+					}
+				}
 				s.engine.Cache().Set(name, cacheItem)
-				s.logger.Printf("Received data content for %s, checksum: %X, size: %d", name, checksum, len(data))
 			} else {
-				s.logger.Printf("Checksum mismatch for %s, %X:%X, %d", name, crc32.ChecksumIEEE(data), checksum, len(data))
+				s.logger.Printf("Chunk checksum mismatch for %s, chunk %d", name, chunkIndex)
 				s.sendErrorMessage(pkt.GetHeader().PacketUid, packet.ErrorCode_DATA_CHECK_SUM_FAILED)
 			}
 		} else {
@@ -225,10 +246,11 @@ func (s *Session) HandlePacket(pkt *packet.RTDEXPacket) {
 		if cacheItem := s.engine.Cache().Get(name); cacheItem == nil {
 			s.logger.Printf("Data not found for %s", name)
 			s.sendErrorMessage(pkt.GetHeader().PacketUid, packet.ErrorCode_DATA_NOT_FOUND)
-		} else if cacheItem.Size == 0 || cacheItem.Checksum == 0 {
+		} else if cacheItem.NumChunks > len(cacheItem.Chunks) {
 			s.logger.Printf("Data not ready for %s", name)
 			s.sendErrorMessage(pkt.GetHeader().PacketUid, packet.ErrorCode_DATA_NOT_READY)
 		} else {
+			s.sendDataInterestResponse(name, cacheItem.Checksum, uint32(cacheItem.NumChunks))
 			s.sendDataContent(name, cacheItem)
 		}
 	default:
@@ -254,21 +276,33 @@ func (s *Session) sendJoinResponse() {
 	s.pktAckCallbacks.Store(pkt.GetHeader().PacketUid, cb)
 }
 
-func (s *Session) sendDataContent(name string, cacheItem *core.CacheItem) {
-	pkt := packet.CreateDataContentPacket(s.engine.Server().ID(), s.id, name, cacheItem.Checksum, cacheItem.Data)
+func (s *Session) sendDataInterestResponse(name string, checksum uint32, numChunks uint32) {
+	pkt := packet.CreateDataInterestResponsePacket(s.engine.Server().ID(), s.id, name, checksum, numChunks)
 	s.outQueueHighPriority <- pkt
-	ackCb := &pktCallback{
+	cb := &pktCallback{
 		Pkt: pkt,
 		Cb:  s.ackTimeoutCallback(pkt),
 	}
-	s.pktAckCallbacks.Store(pkt.GetHeader().PacketUid, ackCb)
-	errCb := &pktCallback{
-		Pkt: pkt,
-		Cb: func() {
-			s.outQueueHighPriority <- pkt // retransmit
-		},
+	s.pktAckCallbacks.Store(pkt.GetHeader().PacketUid, cb)
+}
+
+func (s *Session) sendDataContent(name string, cacheItem *core.CacheItem) {
+	for i := 0; i < cacheItem.NumChunks; i++ {
+		pkt := packet.CreateDataContentPacket(s.engine.Server().ID(), s.id, name, uint32(i), cacheItem.ChunkChecksums[i], cacheItem.Chunks[i])
+		s.outQueueHighPriority <- pkt
+		ackCb := &pktCallback{
+			Pkt: pkt,
+			Cb:  s.ackTimeoutCallback(pkt),
+		}
+		s.pktAckCallbacks.Store(pkt.GetHeader().PacketUid, ackCb)
+		errCb := &pktCallback{
+			Pkt: pkt,
+			Cb: func() {
+				s.outQueueHighPriority <- pkt // retransmit
+			},
+		}
+		s.pktErrCallbacks.Store(pkt.GetHeader().PacketUid, errCb)
 	}
-	s.pktErrCallbacks.Store(pkt.GetHeader().PacketUid, errCb)
 }
 
 func (s *Session) ackTimeoutCallback(pkt *packet.RTDEXPacket) func() {

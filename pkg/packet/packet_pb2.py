@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z\npkg/packet',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x0cpacket.proto\x12\x05rtdex\"\xf6\x01\n\x0cPacketHeader\x12\x18\n\x10protocol_version\x18\x01 \x01(\r\x12\x12\n\npacket_uid\x18\x02 \x01(\r\x12&\n\x0bpacket_type\x18\x03 \x01(\x0e\x32\x11.rtdex.PacketType\x12\x17\n\x0fsequence_number\x18\x04 \x01(\r\x12\x11\n\tsource_id\x18\x05 \x01(\r\x12\x16\n\x0e\x64\x65stination_id\x18\x06 \x01(\r\x12!\n\x08priority\x18\x07 \x01(\x0e\x32\x0f.rtdex.Priority\x12\x11\n\ttimestamp\x18\x08 \x01(\x04\x12\x16\n\x0epayload_length\x18\t \x01(\r\"J\n\x0bJoinRequest\x12\n\n\x02id\x18\x01 \x01(\r\x12\x11\n\tnamespace\x18\x02 \x01(\t\x12\x1c\n\x14\x61uthentication_token\x18\x03 \x01(\r\"%\n\x0cJoinResponse\x12\x15\n\rsession_token\x18\x02 \x01(\r\"=\n\x0c\x44\x61taRegister\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x11\n\tfreshness\x18\x02 \x01(\x04\x12\x0c\n\x04size\x18\x03 \x01(\x04\"\x1c\n\x0c\x44\x61taInterest\x12\x0c\n\x04name\x18\x01 \x01(\t\";\n\x0b\x44\x61taContent\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\r\x12\x0c\n\x04\x64\x61ta\x18\x03 \x01(\x0c\"\"\n\x0f\x41\x63knowledgement\x12\x0f\n\x07latency\x18\x01 \x01(\x03\"4\n\x0c\x45rrorMessage\x12$\n\nerror_code\x18\x01 \x01(\x0e\x32\x10.rtdex.ErrorCode\"5\n\nStatistics\x12\x12\n\nstation_id\x18\x01 \x01(\r\x12\x13\n\x0bstatus_code\x18\x02 \x01(\r\"8\n\rConfiguration\x12\x12\n\nstation_id\x18\x01 \x01(\r\x12\x13\n\x0b\x63onfig_data\x18\x02 \x01(\x0c\"\x1e\n\tHeartbeat\x12\x11\n\ttimestamp\x18\x02 \x01(\x04\"\xff\x03\n\x0bRTDEXPacket\x12#\n\x06header\x18\x01 \x01(\x0b\x32\x13.rtdex.PacketHeader\x12*\n\x0cjoin_request\x18\x02 \x01(\x0b\x32\x12.rtdex.JoinRequestH\x00\x12,\n\rjoin_response\x18\x03 \x01(\x0b\x32\x13.rtdex.JoinResponseH\x00\x12,\n\rdata_register\x18\x04 \x01(\x0b\x32\x13.rtdex.DataRegisterH\x00\x12,\n\rdata_interest\x18\x05 \x01(\x0b\x32\x13.rtdex.DataInterestH\x00\x12*\n\x0c\x64\x61ta_content\x18\x06 \x01(\x0b\x32\x12.rtdex.DataContentH\x00\x12\x31\n\x0f\x61\x63knowledgement\x18\x07 \x01(\x0b\x32\x16.rtdex.AcknowledgementH\x00\x12,\n\rerror_message\x18\x08 \x01(\x0b\x32\x13.rtdex.ErrorMessageH\x00\x12\'\n\nstatistics\x18\t \x01(\x0b\x32\x11.rtdex.StatisticsH\x00\x12-\n\rconfiguration\x18\n \x01(\x0b\x32\x14.rtdex.ConfigurationH\x00\x12%\n\theartbeat\x18\x0b \x01(\x0b\x32\x10.rtdex.HeartbeatH\x00\x42\t\n\x07payload*\xdc\x01\n\nPacketType\x12\x17\n\x13UNKNOWN_PACKET_TYPE\x10\x00\x12\x10\n\x0cJOIN_REQUEST\x10\x01\x12\x11\n\rJOIN_RESPONSE\x10\x02\x12\x11\n\rERROR_MESSAGE\x10\x03\x12\x11\n\rDATA_REGISTER\x10\x04\x12\x11\n\rDATA_INTEREST\x10\x05\x12\x10\n\x0c\x44\x41TA_CONTENT\x10\x06\x12\x13\n\x0f\x41\x43KNOWLEDGEMENT\x10\x07\x12\x0e\n\nSTATISTICS\x10\x08\x12\x11\n\rCONFIGURATION\x10\t\x12\r\n\tHEARTBEAT\x10\n*?\n\x08Priority\x12\x14\n\x10UNKNOWN_PRIORITY\x10\x00\x12\x07\n\x03LOW\x10\x01\x12\n\n\x06MEDIUM\x10\x02\x12\x08\n\x04HIGH\x10\x03*\x96\x01\n\tErrorCode\x12\x11\n\rUNKNOWN_ERROR\x10\x00\x12\x19\n\x15\x41UTHENTICATION_FAILED\x10\x01\x12\x18\n\x14\x44\x41TA_REGISTER_FAILED\x10\x02\x12\x12\n\x0e\x44\x41TA_NOT_FOUND\x10\x03\x12\x12\n\x0e\x44\x41TA_NOT_READY\x10\x04\x12\x19\n\x15\x44\x41TA_CHECK_SUM_FAILED\x10\x05\x42\x0cZ\npkg/packetb\x06proto3'
+  serialized_pb=b'\n\x0cpacket.proto\x12\x05rtdex\"\xf6\x01\n\x0cPacketHeader\x12\x18\n\x10protocol_version\x18\x01 \x01(\r\x12\x12\n\npacket_uid\x18\x02 \x01(\r\x12&\n\x0bpacket_type\x18\x03 \x01(\x0e\x32\x11.rtdex.PacketType\x12\x17\n\x0fsequence_number\x18\x04 \x01(\r\x12\x11\n\tsource_id\x18\x05 \x01(\r\x12\x16\n\x0e\x64\x65stination_id\x18\x06 \x01(\r\x12!\n\x08priority\x18\x07 \x01(\x0e\x32\x0f.rtdex.Priority\x12\x11\n\ttimestamp\x18\x08 \x01(\x04\x12\x16\n\x0epayload_length\x18\t \x01(\r\"J\n\x0bJoinRequest\x12\n\n\x02id\x18\x01 \x01(\r\x12\x11\n\tnamespace\x18\x02 \x01(\t\x12\x1c\n\x14\x61uthentication_token\x18\x03 \x01(\r\"%\n\x0cJoinResponse\x12\x15\n\rsession_token\x18\x02 \x01(\r\"c\n\x0c\x44\x61taRegister\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x11\n\tfreshness\x18\x02 \x01(\x04\x12\x0c\n\x04size\x18\x03 \x01(\x04\x12\x10\n\x08\x63hecksum\x18\x04 \x01(\r\x12\x12\n\nnum_chunks\x18\x05 \x01(\r\"\x1c\n\x0c\x44\x61taInterest\x12\x0c\n\x04name\x18\x01 \x01(\t\"J\n\x14\x44\x61taInterestResponse\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\r\x12\x12\n\nnum_chunks\x18\x03 \x01(\r\"P\n\x0b\x44\x61taContent\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x13\n\x0b\x63hunk_index\x18\x02 \x01(\r\x12\x10\n\x08\x63hecksum\x18\x03 \x01(\r\x12\x0c\n\x04\x64\x61ta\x18\x04 \x01(\x0c\"\"\n\x0f\x41\x63knowledgement\x12\x0f\n\x07latency\x18\x01 \x01(\x03\"4\n\x0c\x45rrorMessage\x12$\n\nerror_code\x18\x01 \x01(\x0e\x32\x10.rtdex.ErrorCode\"5\n\nStatistics\x12\x12\n\nstation_id\x18\x01 \x01(\r\x12\x13\n\x0bstatus_code\x18\x02 \x01(\r\"8\n\rConfiguration\x12\x12\n\nstation_id\x18\x01 \x01(\r\x12\x13\n\x0b\x63onfig_data\x18\x02 \x01(\x0c\"\x1e\n\tHeartbeat\x12\x11\n\ttimestamp\x18\x02 \x01(\x04\"\xbe\x04\n\x0bRTDEXPacket\x12#\n\x06header\x18\x01 \x01(\x0b\x32\x13.rtdex.PacketHeader\x12*\n\x0cjoin_request\x18\x02 \x01(\x0b\x32\x12.rtdex.JoinRequestH\x00\x12,\n\rjoin_response\x18\x03 \x01(\x0b\x32\x13.rtdex.JoinResponseH\x00\x12,\n\rdata_register\x18\x04 \x01(\x0b\x32\x13.rtdex.DataRegisterH\x00\x12,\n\rdata_interest\x18\x05 \x01(\x0b\x32\x13.rtdex.DataInterestH\x00\x12=\n\x16\x64\x61ta_interest_response\x18\x06 \x01(\x0b\x32\x1b.rtdex.DataInterestResponseH\x00\x12*\n\x0c\x64\x61ta_content\x18\x07 \x01(\x0b\x32\x12.rtdex.DataContentH\x00\x12\x31\n\x0f\x61\x63knowledgement\x18\x08 \x01(\x0b\x32\x16.rtdex.AcknowledgementH\x00\x12,\n\rerror_message\x18\t \x01(\x0b\x32\x13.rtdex.ErrorMessageH\x00\x12\'\n\nstatistics\x18\n \x01(\x0b\x32\x11.rtdex.StatisticsH\x00\x12-\n\rconfiguration\x18\x0b \x01(\x0b\x32\x14.rtdex.ConfigurationH\x00\x12%\n\theartbeat\x18\x0c \x01(\x0b\x32\x10.rtdex.HeartbeatH\x00\x42\t\n\x07payload*\xf8\x01\n\nPacketType\x12\x17\n\x13UNKNOWN_PACKET_TYPE\x10\x00\x12\x10\n\x0cJOIN_REQUEST\x10\x01\x12\x11\n\rJOIN_RESPONSE\x10\x02\x12\x11\n\rERROR_MESSAGE\x10\x03\x12\x11\n\rDATA_REGISTER\x10\x04\x12\x11\n\rDATA_INTEREST\x10\x05\x12\x1a\n\x16\x44\x41TA_INTEREST_RESPONSE\x10\x06\x12\x10\n\x0c\x44\x41TA_CONTENT\x10\x07\x12\x13\n\x0f\x41\x43KNOWLEDGEMENT\x10\x08\x12\x0e\n\nSTATISTICS\x10\t\x12\x11\n\rCONFIGURATION\x10\n\x12\r\n\tHEARTBEAT\x10\x0b*?\n\x08Priority\x12\x14\n\x10UNKNOWN_PRIORITY\x10\x00\x12\x07\n\x03LOW\x10\x01\x12\n\n\x06MEDIUM\x10\x02\x12\x08\n\x04HIGH\x10\x03*\x96\x01\n\tErrorCode\x12\x11\n\rUNKNOWN_ERROR\x10\x00\x12\x19\n\x15\x41UTHENTICATION_FAILED\x10\x01\x12\x18\n\x14\x44\x41TA_REGISTER_FAILED\x10\x02\x12\x12\n\x0e\x44\x41TA_NOT_FOUND\x10\x03\x12\x12\n\x0e\x44\x41TA_NOT_READY\x10\x04\x12\x19\n\x15\x44\x41TA_CHECK_SUM_FAILED\x10\x05\x42\x0cZ\npkg/packetb\x06proto3'
 )
 
 _PACKETTYPE = _descriptor.EnumDescriptor(
@@ -61,35 +61,40 @@ _PACKETTYPE = _descriptor.EnumDescriptor(
       type=None,
       create_key=_descriptor._internal_create_key),
     _descriptor.EnumValueDescriptor(
-      name='DATA_CONTENT', index=6, number=6,
+      name='DATA_INTEREST_RESPONSE', index=6, number=6,
       serialized_options=None,
       type=None,
       create_key=_descriptor._internal_create_key),
     _descriptor.EnumValueDescriptor(
-      name='ACKNOWLEDGEMENT', index=7, number=7,
+      name='DATA_CONTENT', index=7, number=7,
       serialized_options=None,
       type=None,
       create_key=_descriptor._internal_create_key),
     _descriptor.EnumValueDescriptor(
-      name='STATISTICS', index=8, number=8,
+      name='ACKNOWLEDGEMENT', index=8, number=8,
       serialized_options=None,
       type=None,
       create_key=_descriptor._internal_create_key),
     _descriptor.EnumValueDescriptor(
-      name='CONFIGURATION', index=9, number=9,
+      name='STATISTICS', index=9, number=9,
       serialized_options=None,
       type=None,
       create_key=_descriptor._internal_create_key),
     _descriptor.EnumValueDescriptor(
-      name='HEARTBEAT', index=10, number=10,
+      name='CONFIGURATION', index=10, number=10,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='HEARTBEAT', index=11, number=11,
       serialized_options=None,
       type=None,
       create_key=_descriptor._internal_create_key),
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=1291,
-  serialized_end=1511,
+  serialized_start=1489,
+  serialized_end=1737,
 )
 _sym_db.RegisterEnumDescriptor(_PACKETTYPE)
 
@@ -124,8 +129,8 @@ _PRIORITY = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=1513,
-  serialized_end=1576,
+  serialized_start=1739,
+  serialized_end=1802,
 )
 _sym_db.RegisterEnumDescriptor(_PRIORITY)
 
@@ -170,8 +175,8 @@ _ERRORCODE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=1579,
-  serialized_end=1729,
+  serialized_start=1805,
+  serialized_end=1955,
 )
 _sym_db.RegisterEnumDescriptor(_ERRORCODE)
 
@@ -182,11 +187,12 @@ JOIN_RESPONSE = 2
 ERROR_MESSAGE = 3
 DATA_REGISTER = 4
 DATA_INTEREST = 5
-DATA_CONTENT = 6
-ACKNOWLEDGEMENT = 7
-STATISTICS = 8
-CONFIGURATION = 9
-HEARTBEAT = 10
+DATA_INTEREST_RESPONSE = 6
+DATA_CONTENT = 7
+ACKNOWLEDGEMENT = 8
+STATISTICS = 9
+CONFIGURATION = 10
+HEARTBEAT = 11
 UNKNOWN_PRIORITY = 0
 LOW = 1
 MEDIUM = 2
@@ -395,6 +401,20 @@ _DATAREGISTER = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='checksum', full_name='rtdex.DataRegister.checksum', index=3,
+      number=4, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='num_chunks', full_name='rtdex.DataRegister.num_chunks', index=4,
+      number=5, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -408,7 +428,7 @@ _DATAREGISTER = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=387,
-  serialized_end=448,
+  serialized_end=486,
 )
 
 
@@ -439,8 +459,54 @@ _DATAINTEREST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=450,
-  serialized_end=478,
+  serialized_start=488,
+  serialized_end=516,
+)
+
+
+_DATAINTERESTRESPONSE = _descriptor.Descriptor(
+  name='DataInterestResponse',
+  full_name='rtdex.DataInterestResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='rtdex.DataInterestResponse.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='checksum', full_name='rtdex.DataInterestResponse.checksum', index=1,
+      number=2, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='num_chunks', full_name='rtdex.DataInterestResponse.num_chunks', index=2,
+      number=3, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=518,
+  serialized_end=592,
 )
 
 
@@ -460,15 +526,22 @@ _DATACONTENT = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='checksum', full_name='rtdex.DataContent.checksum', index=1,
+      name='chunk_index', full_name='rtdex.DataContent.chunk_index', index=1,
       number=2, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='data', full_name='rtdex.DataContent.data', index=2,
-      number=3, type=12, cpp_type=9, label=1,
+      name='checksum', full_name='rtdex.DataContent.checksum', index=2,
+      number=3, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='data', full_name='rtdex.DataContent.data', index=3,
+      number=4, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -485,8 +558,8 @@ _DATACONTENT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=480,
-  serialized_end=539,
+  serialized_start=594,
+  serialized_end=674,
 )
 
 
@@ -517,8 +590,8 @@ _ACKNOWLEDGEMENT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=541,
-  serialized_end=575,
+  serialized_start=676,
+  serialized_end=710,
 )
 
 
@@ -549,8 +622,8 @@ _ERRORMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=577,
-  serialized_end=629,
+  serialized_start=712,
+  serialized_end=764,
 )
 
 
@@ -588,8 +661,8 @@ _STATISTICS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=631,
-  serialized_end=684,
+  serialized_start=766,
+  serialized_end=819,
 )
 
 
@@ -627,8 +700,8 @@ _CONFIGURATION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=686,
-  serialized_end=742,
+  serialized_start=821,
+  serialized_end=877,
 )
 
 
@@ -659,8 +732,8 @@ _HEARTBEAT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=744,
-  serialized_end=774,
+  serialized_start=879,
+  serialized_end=909,
 )
 
 
@@ -708,43 +781,50 @@ _RTDEXPACKET = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='data_content', full_name='rtdex.RTDEXPacket.data_content', index=5,
+      name='data_interest_response', full_name='rtdex.RTDEXPacket.data_interest_response', index=5,
       number=6, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='acknowledgement', full_name='rtdex.RTDEXPacket.acknowledgement', index=6,
+      name='data_content', full_name='rtdex.RTDEXPacket.data_content', index=6,
       number=7, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='error_message', full_name='rtdex.RTDEXPacket.error_message', index=7,
+      name='acknowledgement', full_name='rtdex.RTDEXPacket.acknowledgement', index=7,
       number=8, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='statistics', full_name='rtdex.RTDEXPacket.statistics', index=8,
+      name='error_message', full_name='rtdex.RTDEXPacket.error_message', index=8,
       number=9, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='configuration', full_name='rtdex.RTDEXPacket.configuration', index=9,
+      name='statistics', full_name='rtdex.RTDEXPacket.statistics', index=9,
       number=10, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='heartbeat', full_name='rtdex.RTDEXPacket.heartbeat', index=10,
+      name='configuration', full_name='rtdex.RTDEXPacket.configuration', index=10,
       number=11, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='heartbeat', full_name='rtdex.RTDEXPacket.heartbeat', index=11,
+      number=12, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -766,8 +846,8 @@ _RTDEXPACKET = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=777,
-  serialized_end=1288,
+  serialized_start=912,
+  serialized_end=1486,
 )
 
 _PACKETHEADER.fields_by_name['packet_type'].enum_type = _PACKETTYPE
@@ -778,6 +858,7 @@ _RTDEXPACKET.fields_by_name['join_request'].message_type = _JOINREQUEST
 _RTDEXPACKET.fields_by_name['join_response'].message_type = _JOINRESPONSE
 _RTDEXPACKET.fields_by_name['data_register'].message_type = _DATAREGISTER
 _RTDEXPACKET.fields_by_name['data_interest'].message_type = _DATAINTEREST
+_RTDEXPACKET.fields_by_name['data_interest_response'].message_type = _DATAINTERESTRESPONSE
 _RTDEXPACKET.fields_by_name['data_content'].message_type = _DATACONTENT
 _RTDEXPACKET.fields_by_name['acknowledgement'].message_type = _ACKNOWLEDGEMENT
 _RTDEXPACKET.fields_by_name['error_message'].message_type = _ERRORMESSAGE
@@ -796,6 +877,9 @@ _RTDEXPACKET.fields_by_name['data_register'].containing_oneof = _RTDEXPACKET.one
 _RTDEXPACKET.oneofs_by_name['payload'].fields.append(
   _RTDEXPACKET.fields_by_name['data_interest'])
 _RTDEXPACKET.fields_by_name['data_interest'].containing_oneof = _RTDEXPACKET.oneofs_by_name['payload']
+_RTDEXPACKET.oneofs_by_name['payload'].fields.append(
+  _RTDEXPACKET.fields_by_name['data_interest_response'])
+_RTDEXPACKET.fields_by_name['data_interest_response'].containing_oneof = _RTDEXPACKET.oneofs_by_name['payload']
 _RTDEXPACKET.oneofs_by_name['payload'].fields.append(
   _RTDEXPACKET.fields_by_name['data_content'])
 _RTDEXPACKET.fields_by_name['data_content'].containing_oneof = _RTDEXPACKET.oneofs_by_name['payload']
@@ -819,6 +903,7 @@ DESCRIPTOR.message_types_by_name['JoinRequest'] = _JOINREQUEST
 DESCRIPTOR.message_types_by_name['JoinResponse'] = _JOINRESPONSE
 DESCRIPTOR.message_types_by_name['DataRegister'] = _DATAREGISTER
 DESCRIPTOR.message_types_by_name['DataInterest'] = _DATAINTEREST
+DESCRIPTOR.message_types_by_name['DataInterestResponse'] = _DATAINTERESTRESPONSE
 DESCRIPTOR.message_types_by_name['DataContent'] = _DATACONTENT
 DESCRIPTOR.message_types_by_name['Acknowledgement'] = _ACKNOWLEDGEMENT
 DESCRIPTOR.message_types_by_name['ErrorMessage'] = _ERRORMESSAGE
@@ -865,6 +950,13 @@ DataInterest = _reflection.GeneratedProtocolMessageType('DataInterest', (_messag
   # @@protoc_insertion_point(class_scope:rtdex.DataInterest)
   })
 _sym_db.RegisterMessage(DataInterest)
+
+DataInterestResponse = _reflection.GeneratedProtocolMessageType('DataInterestResponse', (_message.Message,), {
+  'DESCRIPTOR' : _DATAINTERESTRESPONSE,
+  '__module__' : 'packet_pb2'
+  # @@protoc_insertion_point(class_scope:rtdex.DataInterestResponse)
+  })
+_sym_db.RegisterMessage(DataInterestResponse)
 
 DataContent = _reflection.GeneratedProtocolMessageType('DataContent', (_message.Message,), {
   'DESCRIPTOR' : _DATACONTENT,

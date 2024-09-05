@@ -86,7 +86,7 @@ func CreateJoinResponsePacket(src, dst uint32, sessionToken uint32) *RTDEXPacket
 	return pkt
 }
 
-func CreateDataRegisterPacket(src, dst uint32, name string, freshness, size uint64) *RTDEXPacket {
+func CreateDataRegisterPacket(src, dst uint32, name string, freshness, size uint64, checksum uint32, numChunks uint32) *RTDEXPacket {
 	pkt := &RTDEXPacket{
 		Header: createHeader(PacketType_DATA_REGISTER, getUID(), getSeqNo(), src, dst, Priority_HIGH),
 		Payload: &RTDEXPacket_DataRegister{
@@ -94,6 +94,8 @@ func CreateDataRegisterPacket(src, dst uint32, name string, freshness, size uint
 				Name:      name,
 				Freshness: freshness,
 				Size:      size,
+				Checksum:  checksum,
+				NumChunks: numChunks,
 			},
 		},
 	}
@@ -114,14 +116,30 @@ func CreateDataInterestPacket(src, dst uint32, name string) *RTDEXPacket {
 	return pkt
 }
 
-func CreateDataContentPacket(src, dst uint32, name string, checksum uint32, data []byte) *RTDEXPacket {
+func CreateDataInterestResponsePacket(src, dst uint32, name string, checksum uint32, numChunks uint32) *RTDEXPacket {
+	pkt := &RTDEXPacket{
+		Header: createHeader(PacketType_DATA_INTEREST_RESPONSE, getUID(), getSeqNo(), src, dst, Priority_HIGH),
+		Payload: &RTDEXPacket_DataInterestResponse{
+			DataInterestResponse: &DataInterestResponse{
+				Name:      name,
+				Checksum:  checksum,
+				NumChunks: numChunks,
+			},
+		},
+	}
+	pkt.Header.PayloadLength = getPayloadLength(pkt)
+	return pkt
+}
+
+func CreateDataContentPacket(src, dst uint32, name string, chunkIndex, chunkChecksum uint32, data []byte) *RTDEXPacket {
 	pkt := &RTDEXPacket{
 		Header: createHeader(PacketType_DATA_CONTENT, getUID(), getSeqNo(), src, dst, Priority_HIGH),
 		Payload: &RTDEXPacket_DataContent{
 			DataContent: &DataContent{
-				Name:     name,
-				Checksum: checksum,
-				Data:     data,
+				Name:       name,
+				ChunkIndex: chunkIndex,
+				Checksum:   chunkChecksum,
+				Data:       data,
 			},
 		},
 	}

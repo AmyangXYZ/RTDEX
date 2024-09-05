@@ -7,6 +7,7 @@ import socket
 import time
 import zlib
 import select
+import struct
 from typing import Optional, Tuple
 
 

@@ -37,11 +37,13 @@ type Cache interface {
 }
 
 type CacheItem struct {
-	Name     string    `json:"name"`
-	Data     []byte    `json:"data"`
-	Size     int       `json:"size"`
-	Expiry   time.Time `json:"expiry"`
-	Checksum uint32    `json:"checksum"`
+	Name           string         `json:"name"`
+	Size           int            `json:"size"`
+	Expiry         time.Time      `json:"expiry"`
+	Checksum       uint32         `json:"checksum"`
+	NumChunks      int            `json:"num_chunks"`
+	Chunks         map[int][]byte `json:"-"`
+	ChunkChecksums map[int]uint32 `json:"chunk_checksums"`
 }
 
 type SessionManager interface {

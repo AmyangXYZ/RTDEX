@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"log"
 
 	"github.com/AmyangXYZ/rtdex/pkg/cache"
 	"github.com/AmyangXYZ/rtdex/pkg/config"
@@ -21,11 +22,13 @@ type RTDEXEngine struct {
 	ctx            context.Context
 	packetSniffer  core.PacketSniffer
 	cancel         context.CancelFunc
+	logger         *log.Logger
 }
 
 func NewEngine(cfg config.Config) *RTDEXEngine {
 	engine := &RTDEXEngine{
-		cfg: cfg,
+		cfg:    cfg,
+		logger: log.New(log.Writer(), "[Engine] ", 0),
 	}
 	engine.ctx, engine.cancel = context.WithCancel(context.Background())
 	engine.cache = cache.NewCache(engine)
@@ -48,6 +51,7 @@ func (e *RTDEXEngine) Start() {
 }
 
 func (e *RTDEXEngine) Stop() {
+	e.logger.Println("Stop RTDEX engine")
 	e.cancel()
 }
 

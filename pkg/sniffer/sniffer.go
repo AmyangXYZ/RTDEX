@@ -2,6 +2,7 @@ package sniffer
 
 import (
 	"log"
+	"sync/atomic"
 
 	"github.com/AmyangXYZ/rtdex/pkg/core"
 	"github.com/AmyangXYZ/rtdex/pkg/packet"
@@ -12,6 +13,7 @@ type PacketSniffer struct {
 	count      int
 	packetChan chan *core.PacketMeta
 	capacity   int
+	stopped    atomic.Bool
 	logger     *log.Logger
 }
 
@@ -24,12 +26,16 @@ func NewPacketSniffer(engine core.Engine) *PacketSniffer {
 	}
 	go func() {
 		<-engine.Ctx().Done()
+		s.stopped.Store(true)
 		close(s.packetChan)
 	}()
 	return s
 }
 
 func (s *PacketSniffer) Add(pkt *packet.RTDEXPacket) {
+	if s.stopped.Load() {
+		return
+	}
 	s.count++
 	metadata := &core.PacketMeta{
 		Count:         s.count,
@@ -56,9 +62,6 @@ func (s *PacketSniffer) Add(pkt *packet.RTDEXPacket) {
 	}
 
 	select {
-	case <-s.engine.Ctx().Done():
-		s.logger.Println("Stop packet streaming")
-		return
 	case s.packetChan <- metadata:
 		// Packet added to channel
 	default:
