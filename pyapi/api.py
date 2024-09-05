@@ -22,12 +22,12 @@ class RTDEX_API:
         self.connected = False
         self.verbose = verbose
 
-        self.pkt_buf_size = 36*1024
-        self.chunk_size = 32*1024
+        self.pkt_buf_size = 10*1024
+        self.chunk_size = 8000
         self.max_retries = 3
         self.retry_delay = 1.0
         self.ack_timeout = 1
-        self.response_timeout = 3.0
+        self.response_timeout = 5.0
 
     def connect(self, authentication_token: int):
         """Connect to the RTDEX server."""
@@ -53,7 +53,56 @@ class RTDEX_API:
         """Upload data to the RTDEX server."""
         if not self.connected:
             raise RuntimeError("Not connected to RTDEX server")
-        self._register_and_upload_data(name, data, freshness)
+
+        data_size = len(data)
+        num_chunks = (data_size + self.chunk_size - 1) // self.chunk_size
+        if self.verbose:
+            print(
+                f'[Client-{self.id}] Registering and uploading {name} - freshness: {freshness} seconds, size: {data_size}, chunks: {num_chunks}')
+
+        chunks = []
+        chunk_checksums = []
+        chunk_checksums_bytes = bytearray()
+        for i in range(num_chunks):
+            start = i * self.chunk_size
+            end = min(start + self.chunk_size, data_size)
+            chunk = data[start:end]
+            chunks.append(chunk)
+            chunk_checksum = zlib.crc32(chunk)
+            chunk_checksums.append(chunk_checksum)
+            chunk_checksums_bytes.extend(struct.pack('<I', chunk_checksum))
+
+        root_checksum = zlib.crc32(chunk_checksums_bytes)
+
+        register_packet = RTDEXPacket(
+            header=self._create_header(PacketType.DATA_REGISTER, Priority.HIGH),
+            data_register=DataRegister(
+                name=name,
+                freshness=freshness,
+                size=data_size,
+                checksum=root_checksum,
+                num_chunks=num_chunks
+            )
+        )
+
+        if not self._send_packet(register_packet):
+            raise Exception("Failed to register data after maximum retries")
+
+        for i, chunk in enumerate(chunks):
+            upload_packet = RTDEXPacket(
+                header=self._create_header(PacketType.DATA_CONTENT, Priority.HIGH),
+                data_content=DataContent(
+                    name=name,
+                    chunk_index=i,
+                    checksum=chunk_checksums[i],
+                    data=chunk,
+                )
+            )
+
+            if not self._send_packet(upload_packet):
+                raise Exception(f"Failed to upload chunk {i} after maximum retries")
+
+            time.sleep(0.001)
 
     def get(self, name: str, timeout: float = 30.0) -> Optional[bytes]:
         """Request data from the RTDEX server."""
@@ -70,8 +119,8 @@ class RTDEX_API:
                 print(f"[Client-{self.id}] Failed to send DATA_INTEREST after maximum retries")
             return None
 
-        # Wait for DATA_CONTENT or ERROR_MESSAGE
-        response = self._wait_for_packet([PacketType.DATA_CONTENT, PacketType.ERROR_MESSAGE], timeout)
+        # Wait for DATA_INTEREST_RESPONSE or ERROR_MESSAGE
+        response = self._wait_for_packet([PacketType.DATA_INTEREST_RESPONSE, PacketType.ERROR_MESSAGE], timeout)
         if not response:
             if self.verbose:
                 print(f"[Client-{self.id}] No response received for DATA_INTEREST")
@@ -83,12 +132,58 @@ class RTDEX_API:
                 print(f"[Client-{self.id}] Error retrieving data: {error_code}")
             return None
 
-        if zlib.crc32(response.data_content.data) != response.data_content.checksum:
+        num_chunks = response.data_interest_response.num_chunks
+        root_checksum = response.data_interest_response.checksum
+        if self.verbose:
+            print(
+                f"[Client-{self.id}] Received DATA_INTEREST_RESPONSE for {name} - numChunks: {num_chunks}, rootChecksum: {root_checksum:X}")
+
+        chunks = {}
+        chunk_checksums = {}
+
+        for _ in range(num_chunks):
+            chunk_content = self._wait_for_packet([PacketType.DATA_CONTENT, PacketType.ERROR_MESSAGE], timeout)
+            if not chunk_content:
+                if self.verbose:
+                    print(f"[Client-{self.id}] No chunk content received")
+                return None
+
+            if chunk_content.header.packet_type == PacketType.ERROR_MESSAGE:
+                error_code = ErrorCode.Name(chunk_content.error_message.error_code)
+                if self.verbose:
+                    print(f"[Client-{self.id}] Error retrieving chunk: {error_code}")
+                return None
+
+            chunk_index = chunk_content.data_content.chunk_index
+            chunk_data = chunk_content.data_content.data
+            chunk_checksum = chunk_content.data_content.checksum
+
+            if zlib.crc32(chunk_data) != chunk_checksum:
+                if self.verbose:
+                    print(f"[Client-{self.id}] Chunk {chunk_index} integrity check failed")
+                return None
+
+            chunks[chunk_index] = chunk_data
+            chunk_checksums[chunk_index] = chunk_checksum
+
+        if self.verbose:
+            print(f"[Client-{self.id}] Received all chunks for {name}, verifying root checksum")
+
+        # Verify root checksum
+        all_checksums = bytearray()
+        for i in range(num_chunks):
+            all_checksums.extend(struct.pack('<I', chunk_checksums[i]))
+
+        calculated_root_checksum = zlib.crc32(all_checksums)
+        if calculated_root_checksum != root_checksum:
             if self.verbose:
-                print(f"[Client-{self.id}] Data integrity check failed")
+                print(f"[Client-{self.id}] Root checksum verification failed")
             return None
 
-        return response.data_content.data
+        # Merge chunks
+        full_data = b''.join(chunks[i] for i in range(num_chunks))
+
+        return full_data
 
     def _create_header(self, packet_type, priority, uid=None):
         self.sequence_number += 1
@@ -198,59 +293,6 @@ class RTDEX_API:
 
         return response.join_response
 
-    def _register_and_upload_data(self, name: str, data: bytes, freshness: int):
-        data_size = len(data)
-        num_chunks = -(-data_size // self.chunk_size)  # Ceiling division
-        if self.verbose:
-            print(
-                f'[Client-{self.id}] Registering and uploading {name} - freshness: {freshness} seconds, size: {data_size}, chunks: {num_chunks}')
-
-        for chunk_id in range(num_chunks):
-            start = chunk_id * self.chunk_size
-            end = start + self.chunk_size
-            chunk = data[start:end]
-            chunk_name = f"{name}" if num_chunks == 1 else f"{name}/{chunk_id + 1}"
-            chunk_size = len(chunk)
-            checksum = zlib.crc32(chunk)
-
-            self._register_data(chunk_name, chunk, chunk_size, freshness, checksum)
-            time.sleep(0.001)
-
-    def _register_data(self, data_name: str, data: bytes, data_size: int, freshness: int, checksum: int):
-        if self.verbose:
-            print(
-                f"[Client-{self.id}] Registering data: {data_name}, size: {data_size}, freshness: {freshness} seconds, checksum: {checksum:X}")
-
-        register_packet = RTDEXPacket(
-            header=self._create_header(PacketType.DATA_REGISTER, Priority.HIGH),
-            data_register=DataRegister(
-                name=data_name,
-                freshness=freshness,
-                size=data_size,
-            )
-        )
-
-        if self._send_packet(register_packet):
-            self._upload_data(data_name, data, checksum)
-        else:
-            raise Exception("Failed to register data after maximum retries")
-
-    def _upload_data(self, data_name: str, data: bytes, checksum: int):
-        if self.verbose:
-            print(f"[Client-{self.id}] Uploading data: {data_name}, checksum: {checksum:X}")
-
-        upload_packet = RTDEXPacket(
-            header=self._create_header(PacketType.DATA_CONTENT, Priority.HIGH),
-            data_content=DataContent(
-                name=data_name,
-                checksum=checksum,
-                data=data,
-            )
-        )
-
-        if not self._send_packet(upload_packet):
-            raise Exception("Failed to upload data after maximum retries")
-
 
 def main():
     api = RTDEX_API(3, "/api/test", verbose=True)
@@ -261,13 +303,14 @@ def main():
             return
 
         # Upload data
-        data = b'Hello, RTDEX!'
+        data = bytes(random.getrandbits(8) for _ in range(1024*100))
         name = '/test/data'
         api.put(name, data, freshness=300)
+
         # Request data
         retrieved_data = api.get(name, timeout=5.0)
         if retrieved_data is not None:
-            print(f"Retrieved data: {retrieved_data}")
+            print(f"Retrieved data: {len(retrieved_data)} bytes")
         else:
             print("Failed to retrieve data")
 
