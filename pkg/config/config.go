@@ -7,7 +7,7 @@ var DefaultConfig = Config{
 	ServerAddr:            ":9999",
 	AuthToken:             123,
 	PktBufSize:            10240,
-	ChunkSize:             8000,
+	ChunkSize:             8192,
 	PktQueueSize:          1024,
 	SlotframeSize:         127,
 	SlotDuration:          1 * time.Microsecond,

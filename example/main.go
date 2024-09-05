@@ -15,10 +15,10 @@ func main() {
 	client := rtdex.NewClient(3, "namespace-A", rtdex.DefaultConfig)
 	client.Connect()
 
-	data := make([]byte, 1024*1024)
+	data := make([]byte, 1024*1024*2)
 	rand.Read(data)
 
-	client.Put("/data/test", data, 10)
+	client.Put("/data/test", data, 100)
 
 	if data, err := client.Get("/data/test"); err != nil {
 		fmt.Println(err)
@@ -32,6 +32,6 @@ func main() {
 	// // 		fmt.Println(pkt)
 	// // 	}
 	// // }()
-	go engine.Stop()
+	// go engine.Stop()
 	select {}
 }

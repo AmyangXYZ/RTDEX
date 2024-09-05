@@ -251,7 +251,7 @@ func (s *Session) HandlePacket(pkt *packet.RTDEXPacket) {
 			s.sendErrorMessage(pkt.GetHeader().PacketUid, packet.ErrorCode_DATA_NOT_READY)
 		} else {
 			s.sendDataInterestResponse(name, cacheItem.Checksum, uint32(cacheItem.NumChunks))
-			s.sendDataContent(name, cacheItem)
+			go s.sendDataContent(name, cacheItem)
 		}
 	default:
 		s.logger.Printf("Received unknown packet type: %s", pkt.GetHeader().PacketType)
@@ -302,6 +302,7 @@ func (s *Session) sendDataContent(name string, cacheItem *core.CacheItem) {
 			},
 		}
 		s.pktErrCallbacks.Store(pkt.GetHeader().PacketUid, errCb)
+		time.Sleep(200 * time.Microsecond)
 	}
 }
 

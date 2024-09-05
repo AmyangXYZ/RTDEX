@@ -22,8 +22,8 @@ class RTDEX_API:
         self.connected = False
         self.verbose = verbose
 
-        self.pkt_buf_size = 10*1024
-        self.chunk_size = 8000
+        self.pkt_buf_size = 10240
+        self.chunk_size = 8192
         self.max_retries = 3
         self.retry_delay = 1.0
         self.ack_timeout = 1
@@ -303,7 +303,7 @@ def main():
             return
 
         # Upload data
-        data = bytes(random.getrandbits(8) for _ in range(1024*100))
+        data = bytes(random.getrandbits(8) for _ in range(1024*64))
         name = '/test/data'
         api.put(name, data, freshness=300)
 
