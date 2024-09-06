@@ -18,7 +18,7 @@ func main() {
 	data := make([]byte, 1024*200)
 	rand.Read(data)
 
-	client.Put("/data/test", data, 100)
+	client.Put("/data/test", data, 30)
 
 	if data, err := client.Get("/data/test"); err != nil {
 		fmt.Println(err)

@@ -6,19 +6,22 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AmyangXYZ/rtdex/internal/utils"
 	"github.com/AmyangXYZ/rtdex/pkg/core"
 )
 
 type SessionManager struct {
-	engine   core.Engine
-	Sessions sync.Map
-	logger   *log.Logger
+	engine      core.Engine
+	Sessions    sync.Map
+	expiryQueue *utils.ExpiryPriorityQueue
+	logger      *log.Logger
 }
 
 func NewSessionManager(engine core.Engine) core.SessionManager {
 	return &SessionManager{
-		engine: engine,
-		logger: log.New(log.Writer(), "[SessionManager] ", 0),
+		engine:      engine,
+		expiryQueue: utils.NewExpiryPriorityQueue(),
+		logger:      log.New(log.Writer(), "[SessionManager] ", 0),
 	}
 }
 
@@ -29,6 +32,7 @@ func (m *SessionManager) Start() {
 	<-m.engine.Ctx().Done()
 	m.logger.Println("Stop sessions")
 	m.RemoveAllSessions()
+	m.expiryQueue = utils.NewExpiryPriorityQueue()
 }
 
 func (m *SessionManager) WatchSlotSignal() {
@@ -44,6 +48,10 @@ func (m *SessionManager) WatchSlotSignal() {
 func (m *SessionManager) CreateSession(id uint32, namespace string, remoteAddr *net.UDPAddr) core.Session {
 	session := NewSession(m.engine, id, namespace, remoteAddr)
 	m.Sessions.Store(id, session)
+	m.expiryQueue.Push(&utils.ExpiringItem{
+		Value:    session,
+		ExpireAt: session.Expiry(),
+	})
 	return session
 }
 
@@ -79,15 +87,17 @@ func (m *SessionManager) RemoveAllSessions() {
 }
 
 func (m *SessionManager) Housekeeping() {
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(500 * time.Millisecond)
 	for range ticker.C {
-		m.Sessions.Range(func(id, v interface{}) bool {
-			session := v.(core.Session)
-			if session.Lifetime() == 0 {
-				session.Stop()
-				m.Sessions.Delete(id)
+		for {
+			item := m.expiryQueue.Peek()
+			if item == nil || item.ExpireAt.After(time.Now()) {
+				break
 			}
-			return true
-		})
+			m.expiryQueue.Pop()
+			session := item.Value.(core.Session)
+			m.logger.Printf("Removed expired session %d\n", session.ID())
+			m.RemoveSession(session.ID())
+		}
 	}
 }

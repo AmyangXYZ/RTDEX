@@ -66,7 +66,7 @@ func (s *Server) Start() {
 				continue
 			}
 			s.engine.PacketSniffer().Add(pkt)
-			if session := s.engine.SessionManager().GetSession(pkt.GetHeader().SourceId); session != nil && session.Lifetime() > 0 {
+			if session := s.engine.SessionManager().GetSession(pkt.GetHeader().SourceId); session != nil {
 				if session.RemoteAddr() != addr.String() {
 					session.UpdateRemoteAddr(addr)
 				}

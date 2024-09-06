@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AmyangXYZ/rtdex/internal/utils"
 	"github.com/AmyangXYZ/rtdex/pkg/core"
 )
 
@@ -17,18 +18,20 @@ type Node struct {
 }
 
 type Cache struct {
-	engine core.Engine
-	root   *Node
-	logger *log.Logger
+	engine      core.Engine
+	root        *Node
+	expiryQueue *utils.ExpiryPriorityQueue
+	logger      *log.Logger
 }
 
 // NewCache creates and initializes a new Cache instance.
 // It starts a goroutine for housekeeping and returns a pointer to the new Cache.
 func NewCache(engine core.Engine) *Cache {
 	cache := &Cache{
-		engine: engine,
-		root:   &Node{segment: ""},
-		logger: log.New(log.Writer(), "[Cache] ", 0),
+		engine:      engine,
+		root:        &Node{segment: ""},
+		expiryQueue: utils.NewExpiryPriorityQueue(),
+		logger:      log.New(log.Writer(), "[Cache] ", 0),
 	}
 	go cache.Housekeeping()
 	return cache
@@ -46,6 +49,7 @@ func (c *Cache) Set(name string, item *core.CacheItem) {
 	}
 
 	node.value = item
+	c.expiryQueue.UpdateExpiration(item, item.Expiry)
 }
 
 func (c *Cache) Get(name string) *core.CacheItem {
@@ -63,6 +67,25 @@ func (c *Cache) Get(name string) *core.CacheItem {
 	}
 
 	return nil
+}
+
+func (c *Cache) Remove(name string) {
+	segments := strings.Split(strings.Trim(name, "/"), "/")
+	node := c.root
+	var parent *Node
+	var lastSegment string
+	for _, segment := range segments {
+		if child, ok := node.children.Load(segment); !ok {
+			return
+		} else {
+			parent = node
+			lastSegment = segment
+			node = child.(*Node)
+		}
+	}
+	if parent != nil {
+		parent.children.Delete(lastSegment)
+	}
 }
 
 func (c *Cache) GetAll() []*core.CacheItem {
@@ -84,26 +107,22 @@ func (c *Cache) GetAll() []*core.CacheItem {
 }
 
 func (c *Cache) Housekeeping() {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(500 * time.Millisecond)
 	for {
 		select {
 		case <-c.engine.Ctx().Done():
 			c.ClearAll()
 			return
 		case <-ticker.C:
-			queue := []*Node{c.root}
-			for len(queue) > 0 {
-				node := queue[0]
-				queue = queue[1:]
-				node.children.Range(func(_, value interface{}) bool {
-					child := value.(*Node)
-					queue = append(queue, child)
-					return true
-				})
-				if node.value != nil && time.Now().After(node.value.Expiry) {
-					c.logger.Printf("Removed expired cache %s\n", node.name)
-					node.value = nil
+			now := time.Now()
+			for {
+				item := c.expiryQueue.Peek()
+				if item == nil || item.ExpireAt.After(now) {
+					break
 				}
+				c.expiryQueue.Pop()
+				c.Remove(item.Value.(*core.CacheItem).Name)
+				c.logger.Printf("Removed expired cache %s\n", item.Value.(*core.CacheItem).Name)
 			}
 		}
 	}
@@ -113,5 +132,6 @@ func (c *Cache) ClearAll() {
 	c.root = &Node{
 		children: sync.Map{},
 	}
+	c.expiryQueue = utils.NewExpiryPriorityQueue()
 	c.logger.Println("All cache cleared")
 }

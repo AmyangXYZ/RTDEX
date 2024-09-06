@@ -59,7 +59,8 @@ type Session interface {
 	Stop()
 	ID() uint32
 	Namespace() string
-	Lifetime() int
+	Expiry() time.Time
+	ResetExpiry()
 	RemoteAddr() string
 	UpdateRemoteAddr(addr *net.UDPAddr)
 	HandlePacket(pkt *packet.RTDEXPacket)

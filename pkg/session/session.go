@@ -24,7 +24,7 @@ type Session struct {
 	engine                 core.Engine
 	id                     uint32
 	namespace              string
-	lifetime               int
+	expiry                 time.Time
 	remoteAddr             *net.UDPAddr
 	logger                 *log.Logger
 	pktAckCallbacks        sync.Map
@@ -45,7 +45,7 @@ func NewSession(engine core.Engine, id uint32, namespace string, remoteAddr *net
 		engine:                 engine,
 		id:                     id,
 		namespace:              namespace,
-		lifetime:               engine.Config().SessionLifetime,
+		expiry:                 time.Now().Add(time.Duration(engine.Config().SessionLifetime) * time.Second),
 		logger:                 logger,
 		remoteAddr:             remoteAddr,
 		outQueueHighPriority:   make(chan *packet.RTDEXPacket, engine.Config().PktQueueSize),
@@ -70,16 +70,16 @@ func (s *Session) Namespace() string {
 	return s.namespace
 }
 
-func (s *Session) Lifetime() int {
-	return s.lifetime
+func (s *Session) Expiry() time.Time {
+	return s.expiry
 }
 
 func (s *Session) RemoteAddr() string {
 	return s.remoteAddr.String()
 }
 
-func (s *Session) ResetLifetime() {
-	s.lifetime = s.engine.Config().SessionLifetime
+func (s *Session) ResetExpiry() {
+	s.expiry = time.Now().Add(time.Duration(s.engine.Config().SessionLifetime) * time.Second)
 }
 
 func (s *Session) SlotIncrement(slot int) {
@@ -89,37 +89,7 @@ func (s *Session) SlotIncrement(slot int) {
 	}
 }
 
-func (s *Session) lifetimeTimer() {
-	ticker := time.NewTicker(time.Second)
-	for {
-		select {
-		case <-s.ctx.Done():
-			s.logger.Println("Stop lifetime timer")
-			return
-		case <-ticker.C:
-			if s.lifetime > 0 {
-				s.lifetime--
-			} else {
-				s.logger.Println("Lifetime expired")
-			}
-		}
-	}
-}
-
 func (s *Session) Start() {
-	go s.lifetimeTimer()
-	go func() {
-
-	}()
-	s.processQueuesTimeAware()
-}
-
-func (s *Session) Stop() {
-	s.logger.Println("Stop session")
-	s.cancel()
-}
-
-func (s *Session) processQueuesTimeAware() {
 	for {
 		select {
 		case <-s.ctx.Done():
@@ -148,6 +118,11 @@ func (s *Session) processQueuesTimeAware() {
 	}
 }
 
+func (s *Session) Stop() {
+	s.logger.Println("Stop session")
+	s.cancel()
+}
+
 func (s *Session) tryGetPacket(queue chan *packet.RTDEXPacket) *packet.RTDEXPacket {
 	select {
 	case pkt := <-queue:
@@ -170,7 +145,7 @@ func (s *Session) HandlePacket(pkt *packet.RTDEXPacket) {
 		s.sendAck(pkt.GetHeader().PacketUid, pkt.GetHeader().Timestamp)
 	}
 
-	s.ResetLifetime()
+	s.ResetExpiry()
 
 	switch pkt.GetHeader().PacketType {
 	case packet.PacketType_ACKNOWLEDGEMENT:
