@@ -14,6 +14,7 @@ type Node struct {
 	name     string
 	segment  string
 	value    *core.CacheItem
+	parent   *Node
 	children sync.Map
 }
 
@@ -44,12 +45,13 @@ func (c *Cache) Set(name string, item *core.CacheItem) {
 		child, _ := node.children.LoadOrStore(segment, &Node{
 			name:    name,
 			segment: segment,
+			parent:  node,
 		})
 		node = child.(*Node)
 	}
 
 	node.value = item
-	c.expiryQueue.UpdateExpiration(item, item.Expiry)
+	c.expiryQueue.UpdateExpiration(node, item.Expiry)
 }
 
 func (c *Cache) Get(name string) *core.CacheItem {
@@ -67,25 +69,6 @@ func (c *Cache) Get(name string) *core.CacheItem {
 	}
 
 	return nil
-}
-
-func (c *Cache) Remove(name string) {
-	segments := strings.Split(strings.Trim(name, "/"), "/")
-	node := c.root
-	var parent *Node
-	var lastSegment string
-	for _, segment := range segments {
-		if child, ok := node.children.Load(segment); !ok {
-			return
-		} else {
-			parent = node
-			lastSegment = segment
-			node = child.(*Node)
-		}
-	}
-	if parent != nil {
-		parent.children.Delete(lastSegment)
-	}
 }
 
 func (c *Cache) GetAll() []*core.CacheItem {
@@ -121,8 +104,10 @@ func (c *Cache) Housekeeping() {
 					break
 				}
 				c.expiryQueue.Pop()
-				c.Remove(item.Value.(*core.CacheItem).Name)
-				c.logger.Printf("Removed expired cache %s\n", item.Value.(*core.CacheItem).Name)
+				node := item.Value.(*Node)
+				c.logger.Printf("Removed expired cache %s\n", item.Value.(*Node).value.Name)
+				node.value = nil
+				node.parent.children.Delete(node.segment)
 			}
 		}
 	}
