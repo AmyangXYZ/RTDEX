@@ -17,7 +17,7 @@ A real-time data exchange protocol and library inspired by Named-Data Networking
 graph BT
     subgraph Server[Engine]
         S_UDPSocket[UDP Socket]
-        S_ProtoBuf[Protocol Buffer Encoding/Decoding]
+        S_ProtoBuf[Protobuf]
         S_Cache[In-Network Cache]
 
         subgraph S_SessionMgr[Session Manager]
@@ -34,14 +34,14 @@ graph BT
 
     subgraph Publisher[Publisher client]
         P_UDPSocket[UDP Socket]
-        P_ProtoBuf[Protocol Buffer Encoding/Decoding]
+        P_ProtoBuf[Protobuf]
         P_DataProcessing[Data Processing]
         P_PublishLogic[Publish Logic]
     end
 
     subgraph Subscriber[Subscriber client]
         Sub_UDPSocket[UDP Socket]
-        Sub_ProtoBuf[Protocol Buffer Encoding/Decoding]
+        Sub_ProtoBuf[Protobuf]
         Sub_DataProcessing[Data Processing]
         Sub_SubscribeLogic[Subscribe Logic]
     end
@@ -71,6 +71,8 @@ graph BT
 ```
 
 ## Usage
+
+Go server and client:
 
 ```go
 package main
@@ -114,5 +116,19 @@ func main() {
 
 ```
 
+Python client API:
+
+```python
+api = RTDEX_API(3, "/api/test", verbose=True)
+api.connect(123)
+api.put("/data/test", b"Hello, World!", 100)
+api.get("/data/test", timeout=5.0)
+api.disconnect()
+```
+
 ![packets](./screenshot-packets.png)
 ![cache](./screenshot-data.png)
+
+## License
+
+MIT

@@ -15,7 +15,7 @@ func main() {
 	client := rtdex.NewClient(3, "namespace-A", rtdex.DefaultConfig)
 	client.Connect()
 
-	data := make([]byte, 1024*1024*2)
+	data := make([]byte, 1024*200)
 	rand.Read(data)
 
 	client.Put("/data/test", data, 100)
